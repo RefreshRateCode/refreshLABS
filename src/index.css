@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark is the default theme; html.light flips the tokens. */
+:root {
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --surface-2: #111111;
+  --line: #1f1f1f;
+  --content: #ffffff;
+  --muted: #a3a3a3;
+  --faint: #737373;
+}
+
+html.light {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --line: #e2e8f0;
+  --content: #0f172a;
+  --muted: #475569;
+  --faint: #94a3b8;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--content);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Theme-aware logo swap (white rLabs on dark, black noalanPRO on light) */
+html.light .only-dark {
+  display: none;
+}
+html:not(.light) .only-light {
+  display: none;
+}
+
+/* Native date picker indicator: invert only in dark mode */
+html:not(.light) input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.5;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--content);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface-2) inset;
+}
+
+/* When printing, only the .print-area invoice remains, always on white. */
+@media print {
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+    color: #000;
+  }
+  .print-area {
+    border: none !important;
+    border-radius: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

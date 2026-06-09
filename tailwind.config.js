@@ -1,0 +1,25 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        // Cyan accent (same as the marketing site), works on light + dark.
+        brand: {
+          DEFAULT: "#06b6d4",
+          dark: "#0891b2",
+          light: "#22d3ee",
+        },
+        // Semantic tokens — resolved from CSS variables that flip with theme.
+        bg: "var(--bg)",
+        surface: "var(--surface)",
+        surface2: "var(--surface-2)",
+        line: "var(--line)",
+        content: "var(--content)",
+        muted: "var(--muted)",
+        faint: "var(--faint)",
+      },
+    },
+  },
+  plugins: [],
+};

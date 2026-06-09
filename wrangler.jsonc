@@ -1,0 +1,10 @@
+{
+  "name": "noalanpro-app",
+  "compatibility_date": "2026-02-05",
+  "assets": {
+    "directory": "./dist",
+    // Serve index.html for unknown paths so React Router's
+    // client-side routes (e.g. /customers) work on refresh.
+    "not_found_handling": "single-page-application"
+  }
+}
