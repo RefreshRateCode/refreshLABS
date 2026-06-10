@@ -120,7 +120,7 @@ export default function Projects() {
         </p>
       )}
 
-      <div className="mt-4 overflow-hidden panel">
+      <div className="mt-4 overflow-x-auto panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">

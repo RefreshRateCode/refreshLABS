@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Download } from "lucide-react";
 import { listInvoices, type InvoiceListRow } from "../lib/invoices";
+import { exportInvoicesCsv } from "../lib/quickbooks";
 import { money, formatDate } from "../lib/format";
 import { Badge, Button, TextInput } from "../components/ui";
+import { useToast } from "../components/feedback";
 
 export default function Invoices() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [rows, setRows] = useState<InvoiceListRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +53,24 @@ export default function Invoices() {
             {rows.length === 1 ? "invoice" : "invoices"}
           </p>
         </div>
-        <Button onClick={() => navigate("/invoices/new")}>+ New invoice</Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              try {
+                const n = await exportInvoicesCsv();
+                toast(`Exported ${n} invoices for QuickBooks`, "success");
+              } catch (e) {
+                toast((e as Error).message, "error");
+              }
+            }}
+          >
+            <Download size={16} className="mr-1.5" /> Export
+          </Button>
+          <Button onClick={() => navigate("/invoices/new")}>
+            + New invoice
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5">
@@ -67,7 +88,7 @@ export default function Invoices() {
         </p>
       )}
 
-      <div className="mt-4 overflow-hidden panel">
+      <div className="mt-4 overflow-x-auto panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">

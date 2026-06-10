@@ -7,7 +7,9 @@ import {
   deleteBill,
   type BillInput,
 } from "../lib/bills";
+import { Download } from "lucide-react";
 import { money, formatDate } from "../lib/format";
+import { exportBillsCsv } from "../lib/quickbooks";
 import Modal from "../components/Modal";
 import { Badge, Button, Field, TextInput, TextArea } from "../components/ui";
 import { useToast, useConfirm } from "../components/feedback";
@@ -94,14 +96,29 @@ export default function Bills() {
             {bills.length === 1 ? "bill" : "bills"}
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          + New bill
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              try {
+                const n = await exportBillsCsv();
+                toast(`Exported ${n} bills for QuickBooks`, "success");
+              } catch (e) {
+                toast((e as Error).message, "error");
+              }
+            }}
+          >
+            <Download size={16} className="mr-1.5" /> Export
+          </Button>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+          >
+            + New bill
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5">
@@ -119,7 +136,7 @@ export default function Bills() {
         </p>
       )}
 
-      <div className="mt-4 overflow-hidden panel">
+      <div className="mt-4 overflow-x-auto panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">

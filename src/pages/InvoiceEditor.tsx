@@ -250,7 +250,7 @@ export default function InvoiceEditor() {
       </div>
 
       {/* Line items */}
-      <div className="mt-6 overflow-hidden panel">
+      <div className="mt-6 overflow-x-auto panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">

@@ -292,7 +292,7 @@ export default function InvoiceView() {
 
       {/* Payments — screen only */}
       <div className="mx-auto mt-6 max-w-3xl print:hidden">
-        <div className="overflow-hidden panel">
+        <div className="overflow-x-auto panel">
           <div className="flex items-center justify-between border-b border-line px-5 py-3">
             <div>
               <h2 className="font-semibold text-content">Payments</h2>

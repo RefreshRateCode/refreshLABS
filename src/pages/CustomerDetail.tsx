@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { Customer, InvoiceSummary, Project } from "../lib/database.types";
 import { getCustomer } from "../lib/customers";
 import { supabase } from "../lib/supabase";
 import { listProjectsForCustomer } from "../lib/projects";
 import { money, formatDate } from "../lib/format";
 import { Badge, Button } from "../components/ui";
+import CustomerFormModal from "../components/CustomerFormModal";
+import { useToast } from "../components/feedback";
 
 export default function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
+  const [formOpen, setFormOpen] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [invoices, setInvoices] = useState<InvoiceSummary[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -78,7 +82,14 @@ export default function CustomerDetail() {
         <Button variant="secondary" onClick={() => navigate("/customers")}>
           ← Customers
         </Button>
-        <Button onClick={() => navigate("/invoices/new")}>+ New invoice</Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setFormOpen(true)}>
+            Edit
+          </Button>
+          <Button onClick={() => navigate("/invoices/new")}>
+            + New invoice
+          </Button>
+        </div>
       </div>
 
       {/* Header */}
@@ -143,7 +154,7 @@ export default function CustomerDetail() {
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-faint">
           Invoices
         </h2>
-        <div className="overflow-hidden panel">
+        <div className="overflow-x-auto panel">
           {invoices.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-faint">
               No invoices for this customer yet.
@@ -189,13 +200,16 @@ export default function CustomerDetail() {
         </div>
       </div>
 
-      <p className="mt-6 text-xs text-faint">
-        Need to edit details?{" "}
-        <Link to="/customers" className="text-brand hover:underline">
-          Back to the customers list
-        </Link>
-        .
-      </p>
+      <CustomerFormModal
+        open={formOpen}
+        editing={customer}
+        onClose={() => setFormOpen(false)}
+        onSaved={(saved) => {
+          setCustomer(saved);
+          setFormOpen(false);
+          toast("Customer saved", "success");
+        }}
+      />
     </div>
   );
 }

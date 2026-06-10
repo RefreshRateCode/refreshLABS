@@ -1,16 +1,19 @@
+import { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Customers from "./pages/Customers";
-import CustomerDetail from "./pages/CustomerDetail";
-import Invoices from "./pages/Invoices";
-import InvoiceEditor from "./pages/InvoiceEditor";
-import InvoiceView from "./pages/InvoiceView";
-import Bills from "./pages/Bills";
-import Projects from "./pages/Projects";
-import Settings from "./pages/Settings";
+
+// Pages are code-split so each route loads its own chunk on demand.
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const InvoiceEditor = lazy(() => import("./pages/InvoiceEditor"));
+const InvoiceView = lazy(() => import("./pages/InvoiceView"));
+const Bills = lazy(() => import("./pages/Bills"));
+const Projects = lazy(() => import("./pages/Projects"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 export default function App() {
   return (

@@ -67,7 +67,7 @@ export default function Dashboard() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Recent invoices */}
-        <div className="overflow-hidden panel">
+        <div className="overflow-x-auto panel">
           <div className="flex items-center justify-between border-b border-line px-5 py-3">
             <h2 className="font-semibold text-content">Recent invoices</h2>
             <Link to="/invoices" className="text-xs text-brand hover:underline">
@@ -111,7 +111,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent payments */}
-        <div className="overflow-hidden panel">
+        <div className="overflow-x-auto panel">
           <div className="border-b border-line px-5 py-3">
             <h2 className="font-semibold text-content">Recent payments</h2>
           </div>
