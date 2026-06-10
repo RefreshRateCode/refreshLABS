@@ -62,7 +62,7 @@ export async function getInvoice(id: string): Promise<{
 }
 
 // Suggest the next invoice number like "INV-0007" based on existing rows.
-export async function suggestNextNumber(): Promise<string> {
+export async function suggestNextNumber(prefix = "INV-"): Promise<string> {
   const { data, error } = await supabase
     .from("invoices")
     .select("invoice_number")
@@ -76,7 +76,7 @@ export async function suggestNextNumber(): Promise<string> {
     if (m) max = Math.max(max, parseInt(m[1], 10));
   }
   const next = String(max + 1).padStart(4, "0");
-  return `INV-${next}`;
+  return `${prefix}${next}`;
 }
 
 async function replaceLineItems(invoiceId: string, items: LineItemInput[]) {

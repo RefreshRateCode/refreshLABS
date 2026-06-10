@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Customer } from "../lib/database.types";
 import {
   listCustomers,
@@ -9,6 +10,7 @@ import {
 } from "../lib/customers";
 import Modal from "../components/Modal";
 import { Button, Field, TextInput, TextArea } from "../components/ui";
+import { useToast, useConfirm } from "../components/feedback";
 
 const empty: CustomerInput = {
   display_name: "",
@@ -26,6 +28,9 @@ const empty: CustomerInput = {
 };
 
 export default function Customers() {
+  const toast = useToast();
+  const confirm = useConfirm();
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,12 +75,19 @@ export default function Customers() {
   };
 
   const onDelete = async (c: Customer) => {
-    if (!confirm(`Delete ${c.display_name}? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: "Delete customer?",
+      message: `${c.display_name} will be permanently removed. This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteCustomer(c.id);
       setCustomers((prev) => prev.filter((x) => x.id !== c.id));
+      toast("Customer deleted", "success");
     } catch (e) {
-      alert((e as Error).message);
+      toast((e as Error).message, "error");
     }
   };
 
@@ -106,7 +118,7 @@ export default function Customers() {
         </p>
       )}
 
-      <div className="mt-4 overflow-hidden rounded-lg border border-line bg-surface">
+      <div className="mt-4 overflow-hidden panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">
@@ -139,8 +151,8 @@ export default function Customers() {
                   className="border-b border-line last:border-0 hover:bg-surface2"
                 >
                   <td
-                    className="cursor-pointer px-4 py-3 font-medium text-content"
-                    onClick={() => openEdit(c)}
+                    className="cursor-pointer px-4 py-3 font-medium text-content hover:text-brand"
+                    onClick={() => navigate(`/customers/${c.id}`)}
                   >
                     {c.display_name}
                   </td>

@@ -11,6 +11,7 @@ import {
   type LineItemInput,
 } from "../lib/invoices";
 import { money } from "../lib/format";
+import { getSettings } from "../lib/settings";
 import { Button, Field, TextInput, TextArea } from "../components/ui";
 
 const STATUSES: InvoiceStatus[] = [
@@ -83,11 +84,13 @@ export default function InvoiceEditor() {
               : [blankRow()],
           );
         } else {
-          const num = await suggestNextNumber();
+          const settings = await getSettings();
+          const num = await suggestNextNumber(settings.invoice_prefix);
           setForm((f) => ({
             ...f,
             invoice_number: num,
             customer_id: custs[0]?.id ?? "",
+            tax_rate: settings.default_tax_rate,
           }));
         }
       } catch (e) {
@@ -186,7 +189,7 @@ export default function InvoiceEditor() {
         </p>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-5 rounded-lg border border-line bg-surface p-6 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-5 panel p-6 sm:grid-cols-3">
         <Field label="Customer *">
           <select
             className={selectCls}
@@ -247,7 +250,7 @@ export default function InvoiceEditor() {
       </div>
 
       {/* Line items */}
-      <div className="mt-6 overflow-hidden rounded-lg border border-line bg-surface">
+      <div className="mt-6 overflow-hidden panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">
@@ -330,7 +333,7 @@ export default function InvoiceEditor() {
           </Field>
         </div>
         <div className="sm:w-72">
-          <div className="rounded-lg border border-line bg-surface p-4 text-sm">
+          <div className="panel p-4 text-sm">
             <Row label="Subtotal" value={money(subtotal)} />
             <Row
               label={`Tax (${form.tax_rate || 0}%)`}

@@ -55,12 +55,9 @@ export default function Dashboard() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {cards.map((c) => (
-          <div
-            key={c.label}
-            className="rounded-lg border border-line bg-surface p-5"
-          >
+          <div key={c.label} className="panel panel-hover p-5">
             <div className="text-sm text-muted">{c.label}</div>
-            <div className="mt-2 text-3xl font-semibold text-content">
+            <div className="accent-gradient mt-2 text-3xl font-semibold">
               {loading ? "…" : c.value}
             </div>
             <div className="mt-1 text-xs text-faint">{c.hint}</div>
@@ -70,7 +67,7 @@ export default function Dashboard() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Recent invoices */}
-        <div className="overflow-hidden rounded-lg border border-line bg-surface">
+        <div className="overflow-hidden panel">
           <div className="flex items-center justify-between border-b border-line px-5 py-3">
             <h2 className="font-semibold text-content">Recent invoices</h2>
             <Link to="/invoices" className="text-xs text-brand hover:underline">
@@ -114,7 +111,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent payments */}
-        <div className="overflow-hidden rounded-lg border border-line bg-surface">
+        <div className="overflow-hidden panel">
           <div className="border-b border-line px-5 py-3">
             <h2 className="font-semibold text-content">Recent payments</h2>
           </div>

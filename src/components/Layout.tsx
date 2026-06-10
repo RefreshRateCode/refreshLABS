@@ -7,6 +7,8 @@ const nav = [
   { to: "/customers", label: "Customers" },
   { to: "/invoices", label: "Invoices" },
   { to: "/bills", label: "Bills" },
+  { to: "/projects", label: "Projects" },
+  { to: "/settings", label: "Settings" },
 ];
 
 export default function Layout() {

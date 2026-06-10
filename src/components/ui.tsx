@@ -47,6 +47,11 @@ const badgeColors: Record<string, string> = {
   overdue: "bg-red-500/15 text-red-300",
   void: "bg-neutral-600/20 text-faint line-through",
   unpaid: "bg-amber-500/15 text-amber-300",
+  // project statuses
+  active: "bg-brand/15 text-brand",
+  on_hold: "bg-amber-500/15 text-amber-300",
+  done: "bg-emerald-500/15 text-emerald-300",
+  cancelled: "bg-neutral-600/20 text-faint line-through",
 };
 
 export function Badge({ status }: { status: string }) {
@@ -55,7 +60,7 @@ export function Badge({ status }: { status: string }) {
     <span
       className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${cls}`}
     >
-      {status}
+      {status.replace(/_/g, " ")}
     </span>
   );
 }

@@ -18,6 +18,16 @@ export type CustomerInput = Pick<
   | "is_active"
 >;
 
+export async function getCustomer(id: string): Promise<Customer> {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data as Customer;
+}
+
 export async function listCustomers(): Promise<Customer[]> {
   const { data, error } = await supabase
     .from("customers")

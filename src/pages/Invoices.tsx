@@ -67,7 +67,7 @@ export default function Invoices() {
         </p>
       )}
 
-      <div className="mt-4 overflow-hidden rounded-lg border border-line bg-surface">
+      <div className="mt-4 overflow-hidden panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">

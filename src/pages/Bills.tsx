@@ -10,6 +10,7 @@ import {
 import { money, formatDate } from "../lib/format";
 import Modal from "../components/Modal";
 import { Badge, Button, Field, TextInput, TextArea } from "../components/ui";
+import { useToast, useConfirm } from "../components/feedback";
 
 const selectCls =
   "w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm text-content focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand";
@@ -27,6 +28,8 @@ const empty: BillInput = {
 };
 
 export default function Bills() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,12 +68,19 @@ export default function Bills() {
     .reduce((s, b) => s + Number(b.amount), 0);
 
   const onDelete = async (b: Bill) => {
-    if (!confirm(`Delete the ${money(b.amount)} bill from ${b.vendor}?`)) return;
+    const ok = await confirm({
+      title: "Delete bill?",
+      message: `The ${money(b.amount)} bill from ${b.vendor} will be removed.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteBill(b.id);
       setBills((prev) => prev.filter((x) => x.id !== b.id));
+      toast("Bill deleted", "success");
     } catch (e) {
-      alert((e as Error).message);
+      toast((e as Error).message, "error");
     }
   };
 
@@ -109,7 +119,7 @@ export default function Bills() {
         </p>
       )}
 
-      <div className="mt-4 overflow-hidden rounded-lg border border-line bg-surface">
+      <div className="mt-4 overflow-hidden panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">

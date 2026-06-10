@@ -17,9 +17,10 @@ import {
 } from "../lib/payments";
 import { generateInvoicePdf } from "../lib/invoicePdf";
 import { money, formatDate } from "../lib/format";
-import { BUSINESS } from "../lib/business";
+import { getSettings, type Settings } from "../lib/settings";
 import { Badge, Button, Field, TextInput, TextArea } from "../components/ui";
 import Modal from "../components/Modal";
+import { useToast, useConfirm } from "../components/feedback";
 
 const METHODS = ["cash", "check", "card", "ach", "zelle", "venmo", "other"];
 const selectCls =
@@ -29,11 +30,14 @@ const today = () => new Date().toISOString().slice(0, 10);
 export default function InvoiceView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [items, setItems] = useState<InvoiceLineItem[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [summary, setSummary] = useState<InvoiceSummary | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,7 +51,7 @@ export default function InvoiceView() {
       setInvoice(invoice);
       setItems(lineItems);
 
-      const [{ data: cust }, { data: sum }, pays] = await Promise.all([
+      const [{ data: cust }, { data: sum }, pays, sett] = await Promise.all([
         supabase
           .from("customers")
           .select("*")
@@ -55,10 +59,12 @@ export default function InvoiceView() {
           .single(),
         supabase.from("invoice_summary").select("*").eq("id", id).single(),
         listPaymentsByInvoice(id),
+        getSettings(),
       ]);
       setCustomer((cust as Customer) ?? null);
       setSummary((sum as InvoiceSummary) ?? null);
       setPayments(pays);
+      setSettings(sett);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -71,23 +77,37 @@ export default function InvoiceView() {
 
   const onDelete = async () => {
     if (!invoice) return;
-    if (!confirm(`Delete invoice ${invoice.invoice_number}?`)) return;
+    const ok = await confirm({
+      title: "Delete invoice?",
+      message: `Invoice ${invoice.invoice_number}, its line items, and payments will be permanently removed.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteInvoice(invoice.id);
+      toast("Invoice deleted", "success");
       navigate("/invoices");
     } catch (e) {
-      alert((e as Error).message);
+      toast((e as Error).message, "error");
     }
   };
 
   const onDeletePayment = async (p: Payment) => {
     if (!invoice) return;
-    if (!confirm(`Delete this ${money(p.amount)} payment?`)) return;
+    const ok = await confirm({
+      title: "Delete payment?",
+      message: `Remove this ${money(p.amount)} payment?`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deletePayment(p.id, invoice.id);
+      toast("Payment removed", "success");
       await load();
     } catch (e) {
-      alert((e as Error).message);
+      toast((e as Error).message, "error");
     }
   };
 
@@ -143,10 +163,13 @@ export default function InvoiceView() {
           <div>
             <img src="/logo.png" alt="noalanPRO" className="h-8 w-auto" />
             <div className="mt-3 space-y-0.5 text-xs text-white/50">
-              {BUSINESS.line1 && <div>{BUSINESS.line1}</div>}
-              {BUSINESS.cityStateZip && <div>{BUSINESS.cityStateZip}</div>}
-              {BUSINESS.email && <div>{BUSINESS.email}</div>}
-              {BUSINESS.phone && <div>{BUSINESS.phone}</div>}
+              {settings?.business_line1 && <div>{settings.business_line1}</div>}
+              {settings?.business_line2 && <div>{settings.business_line2}</div>}
+              {settings?.business_city_state_zip && (
+                <div>{settings.business_city_state_zip}</div>
+              )}
+              {settings?.business_email && <div>{settings.business_email}</div>}
+              {settings?.business_phone && <div>{settings.business_phone}</div>}
             </div>
           </div>
           <div className="text-right text-white">
@@ -269,7 +292,7 @@ export default function InvoiceView() {
 
       {/* Payments — screen only */}
       <div className="mx-auto mt-6 max-w-3xl print:hidden">
-        <div className="overflow-hidden rounded-lg border border-line bg-surface">
+        <div className="overflow-hidden panel">
           <div className="flex items-center justify-between border-b border-line px-5 py-3">
             <div>
               <h2 className="font-semibold text-content">Payments</h2>

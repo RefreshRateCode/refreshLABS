@@ -5,14 +5,17 @@ import "./index.css";
 import App from "./App.tsx";
 import { AuthProvider } from "./auth/AuthContext";
 import { ThemeProvider } from "./theme/ThemeContext";
+import { FeedbackProvider } from "./components/feedback";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <FeedbackProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </FeedbackProvider>
       </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,
