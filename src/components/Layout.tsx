@@ -1,14 +1,26 @@
 import { NavLink, Outlet } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  Receipt,
+  FolderKanban,
+  Settings as SettingsIcon,
+  Sun,
+  Moon,
+  LogOut,
+  type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../theme/ThemeContext";
 
-const nav = [
-  { to: "/", label: "Dashboard", end: true },
-  { to: "/customers", label: "Customers" },
-  { to: "/invoices", label: "Invoices" },
-  { to: "/bills", label: "Bills" },
-  { to: "/projects", label: "Projects" },
-  { to: "/settings", label: "Settings" },
+const nav: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/customers", label: "Customers", icon: Users },
+  { to: "/invoices", label: "Invoices", icon: FileText },
+  { to: "/bills", label: "Bills", icon: Receipt },
+  { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 export default function Layout() {
@@ -32,29 +44,30 @@ export default function Layout() {
           <span className="text-sm font-semibold text-content">Ops</span>
         </div>
         <nav className="flex-1 space-y-1 px-3">
-          {nav.map((item) => (
+          {nav.map(({ to, label, icon: Icon, end }) => (
             <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
+              key={to}
+              to={to}
+              end={end}
               className={({ isActive }) =>
-                `block rounded-md px-3 py-2 text-sm font-medium transition ${
+                `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
                   isActive
                     ? "bg-brand/15 text-brand"
                     : "text-muted hover:bg-surface2 hover:text-content"
                 }`
               }
             >
-              {item.label}
+              <Icon size={17} strokeWidth={2} />
+              {label}
             </NavLink>
           ))}
         </nav>
         <div className="space-y-1 border-t border-line p-3">
           <button
             onClick={toggle}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-surface2 hover:text-content"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-surface2 hover:text-content"
           >
-            <span>{theme === "dark" ? "☀️" : "🌙"}</span>
+            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
             {theme === "dark" ? "Light mode" : "Dark mode"}
           </button>
           <div className="truncate px-3 pt-1 text-xs text-faint">
@@ -62,8 +75,9 @@ export default function Layout() {
           </div>
           <button
             onClick={signOut}
-            className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-surface2 hover:text-content"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-surface2 hover:text-content"
           >
+            <LogOut size={17} />
             Sign out
           </button>
         </div>
