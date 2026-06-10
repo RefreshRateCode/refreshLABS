@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ServicePreset } from "../lib/database.types";
-import { listEstimates, type EstimateListRow } from "../lib/estimates";
+import {
+  listEstimates,
+  generateMonthlyInvoices,
+  type EstimateListRow,
+} from "../lib/estimates";
 import {
   listPresets,
   createPreset,
@@ -20,7 +24,9 @@ const selectCls =
 
 export default function Estimator() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [rows, setRows] = useState<EstimateListRow[]>([]);
+  const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -73,7 +79,29 @@ export default function Estimator() {
             Plan pricing and monthly plans.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            variant="secondary"
+            disabled={generating}
+            onClick={async () => {
+              setGenerating(true);
+              try {
+                const r = await generateMonthlyInvoices();
+                toast(
+                  `Created ${r.created} invoice${r.created === 1 ? "" : "s"}` +
+                    (r.skipped ? `, skipped ${r.skipped} already billed` : ""),
+                  "success",
+                );
+                await load();
+              } catch (e) {
+                toast((e as Error).message, "error");
+              } finally {
+                setGenerating(false);
+              }
+            }}
+          >
+            {generating ? "Generating…" : "Generate this month"}
+          </Button>
           <Button variant="secondary" onClick={() => setPresetsOpen(true)}>
             Presets
           </Button>

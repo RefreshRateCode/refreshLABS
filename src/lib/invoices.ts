@@ -21,12 +21,35 @@ export type InvoiceInput = {
   due_date: string | null;
   tax_rate: number;
   notes: string | null;
+  source_estimate_id?: string | null;
 };
 
 // Summary rows (joined with customer name) for the list view.
 export type InvoiceListRow = InvoiceSummary & {
   customer: { display_name: string } | null;
 };
+
+// An invoice is overdue if it's been sent (or partially paid), still has a
+// balance, and its due date has passed. Derived on read — no stored "overdue".
+export function isOverdue(r: {
+  status: string;
+  balance_due: number;
+  due_date: string | null;
+}): boolean {
+  if (!r.due_date) return false;
+  if (r.status !== "sent" && r.status !== "partial") return false;
+  if (Number(r.balance_due) <= 0) return false;
+  return r.due_date < new Date().toISOString().slice(0, 10);
+}
+
+// Status to display, upgrading sent/partial to "overdue" when past due.
+export function displayStatus(r: {
+  status: string;
+  balance_due: number;
+  due_date: string | null;
+}): string {
+  return isOverdue(r) ? "overdue" : r.status;
+}
 
 export async function listInvoices(): Promise<InvoiceListRow[]> {
   const { data, error } = await supabase

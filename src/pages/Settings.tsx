@@ -29,6 +29,7 @@ export default function Settings() {
         business_city_state_zip: form.business_city_state_zip?.trim() || null,
         business_email: form.business_email?.trim() || null,
         business_phone: form.business_phone?.trim() || null,
+        default_invoice_notes: form.default_invoice_notes?.trim() || null,
       };
       await saveSettings(payload);
       toast("Settings saved", "success");
@@ -101,7 +102,7 @@ export default function Settings() {
 
         <section className="panel p-6">
           <h2 className="mb-4 font-semibold text-content">Invoice defaults</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Field label="Invoice number prefix" hint="e.g. INV-">
               <TextInput
                 value={form.invoice_prefix}
@@ -117,6 +118,24 @@ export default function Settings() {
                 onChange={(e) =>
                   set("default_tax_rate", Number(e.target.value))
                 }
+              />
+            </Field>
+            <Field label="Payment terms (days)" hint="0 = no due date">
+              <TextInput
+                type="number"
+                min="0"
+                value={form.default_payment_terms_days}
+                onChange={(e) =>
+                  set("default_payment_terms_days", Number(e.target.value))
+                }
+              />
+            </Field>
+          </div>
+          <div className="mt-4">
+            <Field label="Default invoice notes" hint="payment terms, thank-you, etc.">
+              <TextInput
+                value={form.default_invoice_notes ?? ""}
+                onChange={(e) => set("default_invoice_notes", e.target.value)}
               />
             </Field>
           </div>

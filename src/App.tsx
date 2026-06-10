@@ -17,6 +17,7 @@ const Estimator = lazy(() => import("./pages/Estimator"));
 const EstimateEditor = lazy(() => import("./pages/EstimateEditor"));
 const EstimateView = lazy(() => import("./pages/EstimateView"));
 const Projects = lazy(() => import("./pages/Projects"));
+const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="estimator/:id" element={<EstimateView />} />
           <Route path="estimator/:id/edit" element={<EstimateEditor />} />
           <Route path="projects" element={<Projects />} />
+          <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Route>

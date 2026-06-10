@@ -33,6 +33,13 @@ export default function Dashboard() {
       hint: "money spent",
     },
     {
+      label: "Net this month",
+      value: money(
+        data ? data.incomeThisMonth - data.expensesThisMonth : 0,
+      ),
+      hint: "income − expenses",
+    },
+    {
       label: "Outstanding",
       value: money(data?.outstanding),
       hint:
@@ -58,7 +65,7 @@ export default function Dashboard() {
         </p>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {cards.map((c) => (
           <div key={c.label} className="panel panel-hover p-5">
             <div className="text-sm text-muted">{c.label}</div>

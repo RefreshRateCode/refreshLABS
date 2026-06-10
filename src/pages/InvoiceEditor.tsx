@@ -86,11 +86,19 @@ export default function InvoiceEditor() {
         } else {
           const settings = await getSettings();
           const num = await suggestNextNumber(settings.invoice_prefix);
+          let due: string | null = null;
+          if (settings.default_payment_terms_days > 0) {
+            const d = new Date(today() + "T00:00:00");
+            d.setDate(d.getDate() + settings.default_payment_terms_days);
+            due = d.toISOString().slice(0, 10);
+          }
           setForm((f) => ({
             ...f,
             invoice_number: num,
             customer_id: custs[0]?.id ?? "",
             tax_rate: settings.default_tax_rate,
+            due_date: due,
+            notes: settings.default_invoice_notes,
           }));
         }
       } catch (e) {

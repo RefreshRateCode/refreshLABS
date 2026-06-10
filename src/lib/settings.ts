@@ -9,6 +9,8 @@ export type Settings = {
   business_phone: string | null;
   invoice_prefix: string;
   default_tax_rate: number;
+  default_payment_terms_days: number;
+  default_invoice_notes: string | null;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -20,6 +22,8 @@ export const DEFAULT_SETTINGS: Settings = {
   business_phone: null,
   invoice_prefix: "INV-",
   default_tax_rate: 0,
+  default_payment_terms_days: 0,
+  default_invoice_notes: null,
 };
 
 // Returns the user's settings, or sensible defaults if none saved yet (or if
@@ -41,6 +45,8 @@ export async function getSettings(): Promise<Settings> {
       business_phone: data.business_phone,
       invoice_prefix: data.invoice_prefix ?? "INV-",
       default_tax_rate: Number(data.default_tax_rate ?? 0),
+      default_payment_terms_days: Number(data.default_payment_terms_days ?? 0),
+      default_invoice_notes: data.default_invoice_notes ?? null,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

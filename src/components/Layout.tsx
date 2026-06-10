@@ -8,6 +8,7 @@ import {
   CreditCard,
   Calculator,
   FolderKanban,
+  BarChart3,
   Settings as SettingsIcon,
   Sun,
   Moon,
@@ -27,6 +28,7 @@ const nav: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
   { to: "/expenses", label: "Expenses", icon: CreditCard },
   { to: "/estimator", label: "Estimator", icon: Calculator },
   { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

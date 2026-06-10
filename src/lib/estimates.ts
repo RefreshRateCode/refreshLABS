@@ -112,6 +112,100 @@ export async function deleteEstimate(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// Build line items (with discount line) from a plan's stored line items.
+function planItems(
+  lineItems: EstimateLineItem[],
+  discountPct: number,
+): EstLineItemInput[] {
+  const items = lineItems.map((li) => ({
+    description: li.description,
+    quantity: Number(li.quantity),
+    unit_price: Number(li.unit_price),
+  }));
+  if (Number(discountPct) > 0) {
+    const subtotal = lineItems.reduce((s, li) => s + Number(li.amount), 0);
+    const discount = Math.round(subtotal * Number(discountPct)) / 100;
+    items.push({
+      description: `Discount (${discountPct}%)`,
+      quantity: 1,
+      unit_price: -discount,
+    });
+  }
+  return items;
+}
+
+function dueFromTerms(issue: string, days: number): string | null {
+  if (days <= 0) return null;
+  const d = new Date(issue + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+// Create draft invoices for every accepted monthly plan that doesn't already
+// have an invoice this calendar month. Returns how many were created/skipped.
+export async function generateMonthlyInvoices(): Promise<{
+  created: number;
+  skipped: number;
+}> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
+  const settings = await getSettings();
+
+  const { data: plans, error } = await supabase
+    .from("estimates")
+    .select("id, customer_id, tax_rate, discount_pct, notes")
+    .eq("kind", "monthly")
+    .eq("status", "accepted");
+  if (error) throw error;
+
+  let created = 0;
+  let skipped = 0;
+  for (const plan of (plans ?? []) as {
+    id: string;
+    customer_id: string | null;
+    tax_rate: number;
+    discount_pct: number;
+    notes: string | null;
+  }[]) {
+    if (!plan.customer_id) {
+      skipped++;
+      continue;
+    }
+    const { count, error: cErr } = await supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("source_estimate_id", plan.id)
+      .gte("issue_date", monthStart);
+    if (cErr) throw cErr;
+    if ((count ?? 0) > 0) {
+      skipped++;
+      continue;
+    }
+
+    const { lineItems } = await getEstimate(plan.id);
+    const issue = new Date().toISOString().slice(0, 10);
+    const number = await suggestNextNumber(settings.invoice_prefix);
+    await createInvoice(
+      {
+        customer_id: plan.customer_id,
+        project_id: null,
+        invoice_number: number,
+        status: "draft",
+        issue_date: issue,
+        due_date: dueFromTerms(issue, settings.default_payment_terms_days),
+        tax_rate: Number(plan.tax_rate),
+        notes: plan.notes ?? settings.default_invoice_notes,
+        source_estimate_id: plan.id,
+      },
+      planItems(lineItems, Number(plan.discount_pct)),
+    );
+    created++;
+  }
+  return { created, skipped };
+}
+
 // Turn an estimate into a draft invoice (folding any discount into a line item).
 export async function convertToInvoice(estimateId: string): Promise<string> {
   const { estimate, lineItems } = await getEstimate(estimateId);
@@ -138,16 +232,26 @@ export async function convertToInvoice(estimateId: string): Promise<string> {
     });
   }
 
+  const issue = new Date().toISOString().slice(0, 10);
+  const terms = settings.default_payment_terms_days;
+  let due: string | null = null;
+  if (terms > 0) {
+    const d = new Date(issue + "T00:00:00");
+    d.setDate(d.getDate() + terms);
+    due = d.toISOString().slice(0, 10);
+  }
+
   const invoiceId = await createInvoice(
     {
       customer_id: estimate.customer_id,
       project_id: null,
       invoice_number: number,
       status: "draft",
-      issue_date: new Date().toISOString().slice(0, 10),
-      due_date: null,
+      issue_date: issue,
+      due_date: due,
       tax_rate: Number(estimate.tax_rate),
-      notes: estimate.notes,
+      notes: estimate.notes ?? settings.default_invoice_notes,
+      source_estimate_id: estimateId,
     },
     items,
   );

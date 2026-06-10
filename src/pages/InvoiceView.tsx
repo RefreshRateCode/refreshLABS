@@ -8,7 +8,7 @@ import type {
   InvoiceSummary,
   Payment,
 } from "../lib/database.types";
-import { getInvoice, deleteInvoice } from "../lib/invoices";
+import { getInvoice, deleteInvoice, displayStatus } from "../lib/invoices";
 import {
   listPaymentsByInvoice,
   recordPayment,
@@ -93,6 +93,21 @@ export default function InvoiceView() {
     }
   };
 
+  const markSent = async () => {
+    if (!invoice) return;
+    try {
+      const { error } = await supabase
+        .from("invoices")
+        .update({ status: "sent" })
+        .eq("id", invoice.id);
+      if (error) throw error;
+      toast("Marked as sent", "success");
+      await load();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  };
+
   const onDeletePayment = async (p: Payment) => {
     if (!invoice) return;
     const ok = await confirm({
@@ -136,7 +151,12 @@ export default function InvoiceView() {
         <Button variant="secondary" onClick={() => navigate("/invoices")}>
           ← Invoices
         </Button>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap justify-end gap-3">
+          {invoice.status === "draft" && (
+            <Button variant="secondary" onClick={markSent}>
+              Mark sent
+            </Button>
+          )}
           <Button
             variant="secondary"
             onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
@@ -162,7 +182,12 @@ export default function InvoiceView() {
         <div className="flex items-end justify-between bg-[#0a0a0a] px-10 py-7">
           <div>
             <img src="/logo.png" alt="noalanPRO" className="h-8 w-auto" />
-            <div className="mt-3 space-y-0.5 text-xs text-white/50">
+            {settings?.business_name && (
+              <div className="mt-2 text-sm font-semibold text-white/90">
+                {settings.business_name}
+              </div>
+            )}
+            <div className="mt-2 space-y-0.5 text-xs text-white/50">
               {settings?.business_line1 && <div>{settings.business_line1}</div>}
               {settings?.business_line2 && <div>{settings.business_line2}</div>}
               {settings?.business_city_state_zip && (
@@ -180,7 +205,13 @@ export default function InvoiceView() {
               {invoice.invoice_number}
             </div>
             <div className="mt-2">
-              <Badge status={invoice.status} />
+              <Badge
+                status={displayStatus({
+                  status: invoice.status,
+                  balance_due: Number(summary?.balance_due ?? 0),
+                  due_date: invoice.due_date,
+                })}
+              />
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { InvoiceStatus } from "./database.types";
+import { isOverdue } from "./invoices";
 
 export type RecentInvoice = {
   id: string;
@@ -58,7 +59,7 @@ export async function getDashboard(): Promise<DashboardData> {
     recentExpRes,
   ] = await Promise.all([
     supabase.from("payments").select("amount, paid_on").gte("paid_on", monthStart),
-    supabase.from("invoice_summary").select("status, balance_due"),
+    supabase.from("invoice_summary").select("status, balance_due, due_date"),
     supabase.from("bills").select("amount, status").eq("status", "unpaid"),
     supabase
       .from("expenses")
@@ -103,11 +104,12 @@ export async function getDashboard(): Promise<DashboardData> {
   const invoices = (invoicesRes.data ?? []) as {
     status: InvoiceStatus;
     balance_due: number;
+    due_date: string | null;
   }[];
   const outstanding = invoices
     .filter((i) => i.status !== "void")
     .reduce((s, i) => s + Number(i.balance_due), 0);
-  const overdueCount = invoices.filter((i) => i.status === "overdue").length;
+  const overdueCount = invoices.filter(isOverdue).length;
 
   const unpaidBills = (billsRes.data ?? []).reduce(
     (s, b) => s + Number(b.amount),

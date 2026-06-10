@@ -12,6 +12,7 @@ import {
   deleteEstimate,
   convertToInvoice,
 } from "../lib/estimates";
+import { generateEstimatePdf } from "../lib/estimatePdf";
 import { money } from "../lib/format";
 import { Badge, Button } from "../components/ui";
 import { useToast, useConfirm } from "../components/feedback";
@@ -123,6 +124,14 @@ export default function EstimateView() {
             onClick={() => navigate(`/estimator/${estimate.id}/edit`)}
           >
             Edit
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              generateEstimatePdf({ estimate, items, customer, summary })
+            }
+          >
+            PDF
           </Button>
           <Button variant="danger" onClick={onDelete}>
             Delete

@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
-import { listInvoices, type InvoiceListRow } from "../lib/invoices";
+import {
+  listInvoices,
+  displayStatus,
+  type InvoiceListRow,
+} from "../lib/invoices";
 import { exportInvoicesCsv } from "../lib/quickbooks";
 import { money, formatDate } from "../lib/format";
 import { Badge, Button, TextInput } from "../components/ui";
@@ -132,7 +136,7 @@ export default function Invoices() {
                     {formatDate(r.issue_date)}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge status={r.status} />
+                    <Badge status={displayStatus(r)} />
                   </td>
                   <td className="px-4 py-3 text-right text-content">
                     {money(r.total)}
