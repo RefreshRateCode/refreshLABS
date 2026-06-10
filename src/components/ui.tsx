@@ -52,6 +52,11 @@ const badgeColors: Record<string, string> = {
   on_hold: "bg-amber-500/15 text-amber-300",
   done: "bg-emerald-500/15 text-emerald-300",
   cancelled: "bg-neutral-600/20 text-faint line-through",
+  // estimate statuses + kinds
+  accepted: "bg-emerald-500/15 text-emerald-300",
+  declined: "bg-red-500/15 text-red-300",
+  one_time: "bg-neutral-500/15 text-content",
+  monthly: "bg-brand/15 text-brand",
 };
 
 export function Badge({ status }: { status: string }) {

@@ -13,6 +13,9 @@ const InvoiceEditor = lazy(() => import("./pages/InvoiceEditor"));
 const InvoiceView = lazy(() => import("./pages/InvoiceView"));
 const Bills = lazy(() => import("./pages/Bills"));
 const Expenses = lazy(() => import("./pages/Expenses"));
+const Estimator = lazy(() => import("./pages/Estimator"));
+const EstimateEditor = lazy(() => import("./pages/EstimateEditor"));
+const EstimateView = lazy(() => import("./pages/EstimateView"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Settings = lazy(() => import("./pages/Settings"));
 
@@ -31,6 +34,10 @@ export default function App() {
           <Route path="invoices/:id/edit" element={<InvoiceEditor />} />
           <Route path="bills" element={<Bills />} />
           <Route path="expenses" element={<Expenses />} />
+          <Route path="estimator" element={<Estimator />} />
+          <Route path="estimator/new" element={<EstimateEditor />} />
+          <Route path="estimator/:id" element={<EstimateView />} />
+          <Route path="estimator/:id/edit" element={<EstimateEditor />} />
           <Route path="projects" element={<Projects />} />
           <Route path="settings" element={<Settings />} />
         </Route>

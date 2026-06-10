@@ -97,6 +97,67 @@ export interface Bill {
   updated_at: string;
 }
 
+export type EstimateKind = "one_time" | "monthly";
+export type EstimateStatus = "draft" | "sent" | "accepted" | "declined";
+
+export interface ServicePreset {
+  id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  unit: string;
+  default_qty: number;
+  default_rate: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Estimate {
+  id: string;
+  owner_id: string;
+  customer_id: string | null;
+  title: string;
+  kind: EstimateKind;
+  status: EstimateStatus;
+  tax_rate: number;
+  discount_pct: number;
+  notes: string | null;
+  converted_invoice_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EstimateLineItem {
+  id: string;
+  owner_id: string;
+  estimate_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+  position: number;
+  created_at: string;
+}
+
+export interface EstimateSummary {
+  id: string;
+  owner_id: string;
+  customer_id: string | null;
+  title: string;
+  kind: EstimateKind;
+  status: EstimateStatus;
+  tax_rate: number;
+  discount_pct: number;
+  notes: string | null;
+  converted_invoice_id: string | null;
+  created_at: string;
+  subtotal: number;
+  discount_amount: number;
+  net: number;
+  tax_amount: number;
+  total: number;
+}
+
 export interface Expense {
   id: string;
   owner_id: string;

@@ -6,6 +6,7 @@ import {
   FileText,
   Receipt,
   CreditCard,
+  Calculator,
   FolderKanban,
   Settings as SettingsIcon,
   Sun,
@@ -24,6 +25,7 @@ const nav: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
   { to: "/invoices", label: "Invoices", icon: FileText },
   { to: "/bills", label: "Bills", icon: Receipt },
   { to: "/expenses", label: "Expenses", icon: CreditCard },
+  { to: "/estimator", label: "Estimator", icon: Calculator },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
