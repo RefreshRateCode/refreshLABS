@@ -105,6 +105,57 @@ export async function exportInvoicesCsv(): Promise<number> {
   return invoices.length;
 }
 
+type ExpenseExportRow = {
+  expense_date: string;
+  merchant: string;
+  category: string | null;
+  amount: number;
+  payment_method: string | null;
+  tax_deductible: boolean;
+  tax_category: string | null;
+  notes: string | null;
+  customer: { display_name: string } | null;
+  project: { name: string } | null;
+};
+
+export async function exportExpensesCsv(): Promise<number> {
+  const { data, error } = await supabase
+    .from("expenses")
+    .select(
+      "expense_date, merchant, category, amount, payment_method, tax_deductible, tax_category, notes, customer:customers(display_name), project:projects(name)",
+    )
+    .order("expense_date", { ascending: true });
+  if (error) throw error;
+  const expenses = (data ?? []) as unknown as ExpenseExportRow[];
+
+  const headers = [
+    "Date",
+    "Merchant",
+    "Category",
+    "Amount",
+    "PaymentMethod",
+    "Customer",
+    "Project",
+    "TaxDeductible",
+    "TaxCategory",
+    "Memo",
+  ];
+  const rows = expenses.map((e) => [
+    e.expense_date,
+    e.merchant,
+    e.category,
+    Number(e.amount),
+    e.payment_method,
+    e.customer?.display_name ?? "",
+    e.project?.name ?? "",
+    e.tax_deductible ? "Yes" : "No",
+    e.tax_category,
+    e.notes,
+  ]);
+  downloadCsv("expenses-quickbooks.csv", toCsv(headers, rows));
+  return expenses.length;
+}
+
 export async function exportBillsCsv(): Promise<number> {
   const { data, error } = await supabase
     .from("bills")

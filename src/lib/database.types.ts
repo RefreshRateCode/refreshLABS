@@ -97,6 +97,24 @@ export interface Bill {
   updated_at: string;
 }
 
+export interface Expense {
+  id: string;
+  owner_id: string;
+  expense_date: string;
+  merchant: string;
+  category: string | null;
+  amount: number;
+  payment_method: string | null;
+  customer_id: string | null;
+  project_id: string | null;
+  tax_deductible: boolean;
+  tax_category: string | null;
+  receipt_path: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Read-only view: live computed invoice figures.
 export interface InvoiceSummary {
   id: string;

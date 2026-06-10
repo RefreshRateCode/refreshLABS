@@ -12,6 +12,7 @@ const Invoices = lazy(() => import("./pages/Invoices"));
 const InvoiceEditor = lazy(() => import("./pages/InvoiceEditor"));
 const InvoiceView = lazy(() => import("./pages/InvoiceView"));
 const Bills = lazy(() => import("./pages/Bills"));
+const Expenses = lazy(() => import("./pages/Expenses"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Settings = lazy(() => import("./pages/Settings"));
 
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="invoices/:id" element={<InvoiceView />} />
           <Route path="invoices/:id/edit" element={<InvoiceEditor />} />
           <Route path="bills" element={<Bills />} />
+          <Route path="expenses" element={<Expenses />} />
           <Route path="projects" element={<Projects />} />
           <Route path="settings" element={<Settings />} />
         </Route>
