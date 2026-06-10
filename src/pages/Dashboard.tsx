@@ -28,6 +28,11 @@ export default function Dashboard() {
       hint: "payments received",
     },
     {
+      label: "Expenses this month",
+      value: money(data?.expensesThisMonth),
+      hint: "money spent",
+    },
+    {
       label: "Outstanding",
       value: money(data?.outstanding),
       hint:
@@ -38,7 +43,7 @@ export default function Dashboard() {
     {
       label: "Unpaid bills",
       value: money(data?.unpaidBills),
-      hint: "expenses to pay",
+      hint: "bills to pay",
     },
   ];
 
@@ -53,7 +58,7 @@ export default function Dashboard() {
         </p>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
           <div key={c.label} className="panel panel-hover p-5">
             <div className="text-sm text-muted">{c.label}</div>
@@ -82,10 +87,7 @@ export default function Dashboard() {
             <table className="w-full text-sm">
               <tbody>
                 {(data?.recentInvoices ?? []).map((r) => (
-                  <tr
-                    key={r.id}
-                    className="border-b border-line last:border-0"
-                  >
+                  <tr key={r.id} className="border-b border-line last:border-0">
                     <td className="px-5 py-3">
                       <Link
                         to={`/invoices/${r.id}`}
@@ -110,6 +112,44 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* Recent expenses */}
+        <div className="overflow-x-auto panel">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+            <h2 className="font-semibold text-content">Recent expenses</h2>
+            <Link to="/expenses" className="text-xs text-brand hover:underline">
+              View all
+            </Link>
+          </div>
+          {!loading && data && data.recentExpenses.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-faint">
+              No expenses yet.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {(data?.recentExpenses ?? []).map((e) => (
+                  <tr key={e.id} className="border-b border-line last:border-0">
+                    <td className="px-5 py-3">
+                      <div className="font-medium text-content">
+                        {e.merchant}
+                      </div>
+                      <div className="text-xs text-faint">
+                        {e.category ?? "—"}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-muted">
+                      {formatDate(e.expense_date)}
+                    </td>
+                    <td className="px-5 py-3 text-right font-medium text-content">
+                      {money(e.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
         {/* Recent payments */}
         <div className="overflow-x-auto panel">
           <div className="border-b border-line px-5 py-3">
@@ -123,20 +163,14 @@ export default function Dashboard() {
             <table className="w-full text-sm">
               <tbody>
                 {(data?.recentPayments ?? []).map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-line last:border-0"
-                  >
+                  <tr key={p.id} className="border-b border-line last:border-0">
                     <td className="px-5 py-3 text-muted">
                       {formatDate(p.paid_on)}
                     </td>
                     <td className="px-5 py-3 text-muted">
                       {p.invoice?.invoice_number ?? "—"}
                       {p.method ? (
-                        <span className="capitalize text-faint">
-                          {" "}
-                          · {p.method}
-                        </span>
+                        <span className="capitalize text-faint"> · {p.method}</span>
                       ) : null}
                     </td>
                     <td className="px-5 py-3 text-right font-medium text-content">
