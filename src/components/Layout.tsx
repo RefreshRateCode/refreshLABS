@@ -26,6 +26,15 @@ const nav: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
+// Tooltip shown to the right of a rail item on hover (desktop only).
+function Tip({ label }: { label: string }) {
+  return (
+    <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-line bg-surface2 px-2 py-1 text-xs font-medium text-content opacity-0 shadow-lg transition-opacity group-hover:opacity-100 lg:block">
+      {label}
+    </span>
+  );
+}
+
 export default function Layout() {
   const { session, signOut } = useAuth();
   const { theme, toggle } = useTheme();
@@ -60,11 +69,12 @@ export default function Layout() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-56 flex-col border-r border-line bg-surface transition-transform duration-200 lg:static lg:translate-x-0 print:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-56 flex-col border-r border-line bg-surface transition-transform duration-200 lg:static lg:w-16 lg:translate-x-0 print:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-5 py-5">
+        {/* Brand: full logo on the mobile drawer, compact mark on the rail */}
+        <div className="flex items-center justify-between px-5 py-5 lg:hidden">
           <div className="flex items-center gap-2">
             <img
               src="/logo.png"
@@ -80,49 +90,66 @@ export default function Layout() {
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="text-muted hover:text-content lg:hidden"
+            className="text-muted hover:text-content"
             aria-label="Close menu"
           >
             <X size={20} />
           </button>
         </div>
-        <nav className="flex-1 space-y-1 px-3">
+        <div className="hidden justify-center py-5 lg:flex">
+          <img
+            src="/favicon.png"
+            alt="noalanPRO Ops"
+            className="h-8 w-8 rounded-md"
+          />
+        </div>
+
+        <nav className="flex-1 space-y-1 px-3 lg:px-2">
           {nav.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
               onClick={() => setOpen(false)}
+              title={label}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
+                `group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition lg:justify-center lg:gap-0 lg:px-0 ${
                   isActive
                     ? "bg-brand/15 text-brand"
                     : "text-muted hover:bg-surface2 hover:text-content"
                 }`
               }
             >
-              <Icon size={17} strokeWidth={2} />
-              {label}
+              <Icon size={18} strokeWidth={2} />
+              <span className="lg:hidden">{label}</span>
+              <Tip label={label} />
             </NavLink>
           ))}
         </nav>
-        <div className="space-y-1 border-t border-line p-3">
+
+        <div className="space-y-1 border-t border-line p-3 lg:px-2">
           <button
             onClick={toggle}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-surface2 hover:text-content"
+            title={theme === "dark" ? "Light mode" : "Dark mode"}
+            className="group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-surface2 hover:text-content lg:justify-center lg:gap-0 lg:px-0"
           >
-            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-            {theme === "dark" ? "Light mode" : "Dark mode"}
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            <span className="lg:hidden">
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </span>
+            <Tip label={theme === "dark" ? "Light mode" : "Dark mode"} />
           </button>
-          <div className="truncate px-3 pt-1 text-xs text-faint">
+          <div className="truncate px-3 pt-1 text-xs text-faint lg:hidden">
             {session?.user.email}
           </div>
           <button
             onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-surface2 hover:text-content"
+            title="Sign out"
+            className="group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-surface2 hover:text-content lg:justify-center lg:gap-0 lg:px-0"
           >
-            <LogOut size={17} />
-            Sign out
+            <LogOut size={18} />
+            <span className="lg:hidden">Sign out</span>
+            <Tip label="Sign out" />
           </button>
         </div>
       </aside>
