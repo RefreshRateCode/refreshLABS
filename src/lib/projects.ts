@@ -1,22 +1,26 @@
 import { supabase } from "./supabase";
 import type { Project, ProjectStatus } from "./database.types";
+import { applyBrand, type BrandFilter } from "./brand";
 
 export type ProjectInput = {
   customer_id: string | null;
   name: string;
   status: ProjectStatus;
   notes: string | null;
+  business_profile_id: string | null;
 };
 
 export type ProjectRow = Project & {
   customer: { display_name: string } | null;
 };
 
-export async function listProjects(): Promise<ProjectRow[]> {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*, customer:customers(display_name)")
-    .order("created_at", { ascending: false });
+export async function listProjects(
+  brand: BrandFilter = "all",
+): Promise<ProjectRow[]> {
+  const { data, error } = await applyBrand(
+    supabase.from("projects").select("*, customer:customers(display_name)"),
+    brand,
+  ).order("created_at", { ascending: false });
   if (error) throw error;
   return data as ProjectRow[];
 }

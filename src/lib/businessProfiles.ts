@@ -21,13 +21,19 @@ export type BusinessIdentity = {
   phone: string | null;
 };
 
+// Never throws: the DBA feature is an enhancement, so a not-yet-migrated table
+// (or any read error) just yields an empty list instead of breaking the editors.
 export async function listBusinessProfiles(): Promise<BusinessProfile[]> {
-  const { data, error } = await supabase
-    .from("business_profiles")
-    .select("*")
-    .order("name", { ascending: true });
-  if (error) throw error;
-  return data as BusinessProfile[];
+  try {
+    const { data, error } = await supabase
+      .from("business_profiles")
+      .select("*")
+      .order("name", { ascending: true });
+    if (error || !data) return [];
+    return data as BusinessProfile[];
+  } catch {
+    return [];
+  }
 }
 
 export async function createBusinessProfile(

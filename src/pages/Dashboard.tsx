@@ -1,25 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getDashboard, type DashboardData } from "../lib/dashboard";
+import { ESTIMATE_STATUS_LABEL } from "../lib/database.types";
 import { money, formatDate } from "../lib/format";
 import { Badge } from "../components/ui";
+import { useBrand } from "../brand/BrandContext";
 
 export default function Dashboard() {
+  const { brand } = useBrand();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
     (async () => {
       try {
-        setData(await getDashboard());
+        setData(await getDashboard(brand));
       } catch (e) {
         setError((e as Error).message);
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [brand]);
 
   const cards = [
     {
@@ -52,6 +56,16 @@ export default function Dashboard() {
       value: money(data?.unpaidBills),
       hint: "bills to pay",
     },
+    {
+      label: "Open pipeline",
+      value: money(data?.openPipeline),
+      hint:
+        data && data.openEstimateCount > 0
+          ? `${data.openEstimateCount} open estimate${
+              data.openEstimateCount === 1 ? "" : "s"
+            }`
+          : "estimates in play",
+    },
   ];
 
   return (
@@ -65,7 +79,7 @@ export default function Dashboard() {
         </p>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {cards.map((c) => (
           <div key={c.label} className="panel panel-hover p-5">
             <div className="text-sm text-muted">{c.label}</div>
@@ -182,6 +196,91 @@ export default function Dashboard() {
                     </td>
                     <td className="px-5 py-3 text-right font-medium text-content">
                       {money(p.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Recent estimates */}
+        <div className="overflow-x-auto panel">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+            <h2 className="font-semibold text-content">Recent estimates</h2>
+            <Link to="/estimator" className="text-xs text-brand hover:underline">
+              View all
+            </Link>
+          </div>
+          {!loading && data && data.recentEstimates.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-faint">
+              No estimates yet.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {(data?.recentEstimates ?? []).map((r) => (
+                  <tr key={r.id} className="border-b border-line last:border-0">
+                    <td className="px-5 py-3">
+                      <Link
+                        to={`/estimator/${r.id}`}
+                        className="font-medium text-content hover:text-brand"
+                      >
+                        {r.title}
+                      </Link>
+                      <div className="text-xs text-faint">
+                        {r.customer?.display_name ?? "—"}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3">
+                      <Badge
+                        status={r.status}
+                        label={ESTIMATE_STATUS_LABEL[r.status]}
+                      />
+                    </td>
+                    <td className="px-5 py-3 text-right font-medium text-content">
+                      {money(r.total)}
+                      {r.kind === "monthly" && (
+                        <span className="text-faint">/mo</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Recent contracts */}
+        <div className="overflow-x-auto panel">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+            <h2 className="font-semibold text-content">Recent contracts</h2>
+            <Link to="/contracts" className="text-xs text-brand hover:underline">
+              View all
+            </Link>
+          </div>
+          {!loading && data && data.recentContracts.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-faint">
+              No contracts yet.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {(data?.recentContracts ?? []).map((c) => (
+                  <tr key={c.id} className="border-b border-line last:border-0">
+                    <td className="px-5 py-3">
+                      <Link
+                        to="/contracts"
+                        className="font-medium text-content hover:text-brand"
+                      >
+                        {c.title}
+                      </Link>
+                      <div className="text-xs text-faint">
+                        {c.customer?.company ?? "— unassigned —"}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-right text-muted">
+                      {formatDate(c.created_at)}
                     </td>
                   </tr>
                 ))}

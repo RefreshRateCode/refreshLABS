@@ -22,6 +22,7 @@ import { money } from "../lib/format";
 import Modal from "../components/Modal";
 import { Badge, Button, Field, TextInput, TextArea } from "../components/ui";
 import { useToast, useConfirm } from "../components/feedback";
+import { useBrand } from "../brand/BrandContext";
 
 const UNITS = ["hour", "item", "flat", "month"];
 const selectCls =
@@ -30,6 +31,7 @@ const selectCls =
 export default function Estimator() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { brand } = useBrand();
   const [rows, setRows] = useState<EstimateListRow[]>([]);
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export default function Estimator() {
     setLoading(true);
     setError(null);
     try {
-      setRows(await listEstimates());
+      setRows(await listEstimates(brand));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -51,7 +53,8 @@ export default function Estimator() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand]);
 
   // Open pipeline = everything still in play (not won/lost/expired).
   const openRows = rows.filter(

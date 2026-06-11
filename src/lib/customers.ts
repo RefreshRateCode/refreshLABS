@@ -4,6 +4,7 @@ import type {
   CustomerContact,
   CustomerFile,
 } from "./database.types";
+import { applyBrand, type BrandFilter } from "./brand";
 
 // Fields the user can edit directly. owner_id/id/timestamps are DB-managed;
 // email/phone are mirrored from the primary contact by a DB trigger, and
@@ -20,6 +21,7 @@ export type CustomerInput = Pick<
   | "bill_country"
   | "notes"
   | "is_active"
+  | "business_profile_id"
 >;
 
 export async function getCustomer(id: string): Promise<Customer> {
@@ -34,11 +36,15 @@ export async function getCustomer(id: string): Promise<Customer> {
 
 export type CustomerListRow = Customer & { primary_contact: string | null };
 
-export async function listCustomers(): Promise<CustomerListRow[]> {
-  const { data, error } = await supabase
-    .from("customers")
-    .select("*, contacts:customer_contacts(name,is_primary,position)")
-    .order("company", { ascending: true });
+export async function listCustomers(
+  brand: BrandFilter = "all",
+): Promise<CustomerListRow[]> {
+  const { data, error } = await applyBrand(
+    supabase
+      .from("customers")
+      .select("*, contacts:customer_contacts(name,is_primary,position)"),
+    brand,
+  ).order("company", { ascending: true });
   if (error) throw error;
   type Raw = Customer & {
     contacts: { name: string; is_primary: boolean; position: number }[] | null;

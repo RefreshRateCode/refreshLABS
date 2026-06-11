@@ -11,6 +11,7 @@ import {
   type ContactDraft,
 } from "../lib/customers";
 import Modal from "./Modal";
+import BrandSelect from "./BrandSelect";
 import { Button, Field, TextInput, TextArea } from "./ui";
 
 // Customer-level fields (no email/phone — those live on contacts now).
@@ -26,6 +27,7 @@ const emptyCore: CoreInput = {
   bill_country: null,
   notes: null,
   is_active: true,
+  business_profile_id: null,
 };
 
 const emptyContact = (): ContactDraft => ({
@@ -57,8 +59,8 @@ export default function CustomerFormModal({
     if (!open) return;
     setError(null);
     if (editing) {
-      const { company, bill_line1, bill_line2, bill_city, bill_state, bill_postal, bill_country, notes, is_active } = editing;
-      setCore({ company, bill_line1, bill_line2, bill_city, bill_state, bill_postal, bill_country, notes, is_active });
+      const { company, bill_line1, bill_line2, bill_city, bill_state, bill_postal, bill_country, notes, is_active, business_profile_id } = editing;
+      setCore({ company, bill_line1, bill_line2, bill_city, bill_state, bill_postal, bill_country, notes, is_active, business_profile_id });
       // Load existing contacts.
       (async () => {
         try {
@@ -157,6 +159,7 @@ export default function CustomerFormModal({
       bill_country: blank(coreText("bill_country")),
       notes: blank(coreText("notes")),
       is_active: core.is_active,
+      business_profile_id: core.business_profile_id,
     };
 
     setBusy(true);
@@ -314,6 +317,11 @@ export default function CustomerFormModal({
             onChange={(e) => setCoreField("notes", e.target.value)}
           />
         </Field>
+
+        <BrandSelect
+          value={core.business_profile_id}
+          onChange={(v) => setCoreField("business_profile_id", v)}
+        />
 
         {error && (
           <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">

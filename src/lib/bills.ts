@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Bill } from "./database.types";
+import { applyBrand, type BrandFilter } from "./brand";
 
 export type BillInput = Pick<
   Bill,
@@ -11,13 +12,14 @@ export type BillInput = Pick<
   | "status"
   | "paid_on"
   | "notes"
+  | "business_profile_id"
 >;
 
-export async function listBills(): Promise<Bill[]> {
-  const { data, error } = await supabase
-    .from("bills")
-    .select("*")
-    .order("bill_date", { ascending: false });
+export async function listBills(brand: BrandFilter = "all"): Promise<Bill[]> {
+  const { data, error } = await applyBrand(
+    supabase.from("bills").select("*"),
+    brand,
+  ).order("bill_date", { ascending: false });
   if (error) throw error;
   return data as Bill[];
 }

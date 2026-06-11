@@ -27,6 +27,7 @@ export interface Customer {
   bill_country: string | null;
   notes: string | null;
   is_active: boolean;
+  business_profile_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,6 +64,7 @@ export interface Project {
   name: string;
   status: ProjectStatus;
   notes: string | null;
+  business_profile_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -134,6 +136,7 @@ export interface Bill {
   status: BillStatus;
   paid_on: string | null;
   notes: string | null;
+  business_profile_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -222,6 +225,7 @@ export interface EstimateSummary {
   id: string;
   owner_id: string;
   customer_id: string | null;
+  business_profile_id: string | null;
   title: string;
   kind: EstimateKind;
   status: EstimateStatus;
@@ -251,8 +255,37 @@ export interface Expense {
   tax_category: string | null;
   receipt_path: string | null;
   notes: string | null;
+  business_profile_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Contract {
+  id: string;
+  owner_id: string;
+  customer_id: string | null;
+  title: string;
+  path: string | null;
+  file_name: string | null;
+  mime: string | null;
+  size_bytes: number | null;
+  payment_terms_days: number;
+  notes: string | null;
+  business_profile_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractLineItem {
+  id: string;
+  owner_id: string;
+  contract_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number; // generated: quantity * unit_price
+  position: number;
+  created_at: string;
 }
 
 // Read-only view: live computed invoice figures.
@@ -261,6 +294,7 @@ export interface InvoiceSummary {
   owner_id: string;
   customer_id: string;
   project_id: string | null;
+  business_profile_id: string | null;
   invoice_number: string;
   status: InvoiceStatus;
   issue_date: string;

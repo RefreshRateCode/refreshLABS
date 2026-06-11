@@ -6,6 +6,7 @@ import App from "./App.tsx";
 import { AuthProvider } from "./auth/AuthContext";
 import { ThemeProvider } from "./theme/ThemeContext";
 import { FeedbackProvider } from "./components/feedback";
+import { BrandProvider } from "./brand/BrandContext";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")!).render(
       <ThemeProvider>
         <FeedbackProvider>
           <AuthProvider>
-            <App />
+            <BrandProvider>
+              <App />
+            </BrandProvider>
           </AuthProvider>
         </FeedbackProvider>
       </ThemeProvider>

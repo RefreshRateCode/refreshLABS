@@ -10,10 +10,12 @@ import { exportInvoicesCsv } from "../lib/quickbooks";
 import { money, formatDate } from "../lib/format";
 import { Badge, Button, TextInput } from "../components/ui";
 import { useToast } from "../components/feedback";
+import { useBrand } from "../brand/BrandContext";
 
 export default function Invoices() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { brand } = useBrand();
   const [rows, setRows] = useState<InvoiceListRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,14 +26,14 @@ export default function Invoices() {
       setLoading(true);
       setError(null);
       try {
-        setRows(await listInvoices());
+        setRows(await listInvoices(brand));
       } catch (e) {
         setError((e as Error).message);
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [brand]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

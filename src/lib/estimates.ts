@@ -8,6 +8,7 @@ import type {
 } from "./database.types";
 import { createInvoice, suggestNextNumber } from "./invoices";
 import { getSettings } from "./settings";
+import { applyBrand, type BrandFilter } from "./brand";
 
 export type EstLineItemInput = {
   description: string;
@@ -31,11 +32,15 @@ export type EstimateListRow = EstimateSummary & {
   customer: { display_name: string } | null;
 };
 
-export async function listEstimates(): Promise<EstimateListRow[]> {
-  const { data, error } = await supabase
-    .from("estimate_summary")
-    .select("*, customer:customers(display_name)")
-    .order("created_at", { ascending: false });
+export async function listEstimates(
+  brand: BrandFilter = "all",
+): Promise<EstimateListRow[]> {
+  const { data, error } = await applyBrand(
+    supabase
+      .from("estimate_summary")
+      .select("*, customer:customers(display_name)"),
+    brand,
+  ).order("created_at", { ascending: false });
   if (error) throw error;
   return data as unknown as EstimateListRow[];
 }

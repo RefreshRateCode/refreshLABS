@@ -17,8 +17,10 @@ import { listProjects } from "../lib/projects";
 import { exportExpensesCsv } from "../lib/quickbooks";
 import { money, formatDate } from "../lib/format";
 import Modal from "../components/Modal";
+import BrandSelect from "../components/BrandSelect";
 import { Button, Field, TextInput, TextArea } from "../components/ui";
 import { useToast, useConfirm } from "../components/feedback";
+import { useBrand } from "../brand/BrandContext";
 
 const METHODS = ["cash", "card", "check", "ach", "zelle", "venmo", "other"];
 const selectCls =
@@ -37,11 +39,13 @@ const empty: ExpenseInput = {
   tax_category: null,
   receipt_path: null,
   notes: null,
+  business_profile_id: null,
 };
 
 export default function Expenses() {
   const toast = useToast();
   const confirm = useConfirm();
+  const { brand } = useBrand();
   const [rows, setRows] = useState<ExpenseRow[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -56,9 +60,9 @@ export default function Expenses() {
     setError(null);
     try {
       const [e, c, p] = await Promise.all([
-        listExpenses(),
-        listCustomers(),
-        listProjects(),
+        listExpenses(brand),
+        listCustomers(brand),
+        listProjects(brand),
       ]);
       setRows(e);
       setCustomers(c);
@@ -72,7 +76,8 @@ export default function Expenses() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -486,6 +491,11 @@ function ExpenseFormModal({
             onChange={(e) => set("notes", e.target.value)}
           />
         </Field>
+
+        <BrandSelect
+          value={form.business_profile_id}
+          onChange={(v) => set("business_profile_id", v)}
+        />
 
         {error && (
           <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">

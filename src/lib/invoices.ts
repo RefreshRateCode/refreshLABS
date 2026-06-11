@@ -5,6 +5,7 @@ import type {
   InvoiceStatus,
   InvoiceSummary,
 } from "./database.types";
+import { applyBrand, type BrandFilter } from "./brand";
 
 export type LineItemInput = {
   description: string;
@@ -52,11 +53,13 @@ export function displayStatus(r: {
   return isOverdue(r) ? "overdue" : r.status;
 }
 
-export async function listInvoices(): Promise<InvoiceListRow[]> {
-  const { data, error } = await supabase
-    .from("invoice_summary")
-    .select("*, customer:customers(display_name)")
-    .order("issue_date", { ascending: false });
+export async function listInvoices(
+  brand: BrandFilter = "all",
+): Promise<InvoiceListRow[]> {
+  const { data, error } = await applyBrand(
+    supabase.from("invoice_summary").select("*, customer:customers(display_name)"),
+    brand,
+  ).order("issue_date", { ascending: false });
   if (error) throw error;
   return data as InvoiceListRow[];
 }

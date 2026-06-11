@@ -8,6 +8,13 @@ import type {
 import { listCustomers } from "../lib/customers";
 import { listBusinessProfiles } from "../lib/businessProfiles";
 import {
+  listContractsForCustomer,
+  getContract,
+  getContractUrl,
+} from "../lib/contracts";
+import type { Contract } from "../lib/database.types";
+import { useToast } from "../components/feedback";
+import {
   createInvoice,
   updateInvoice,
   getInvoice,
@@ -43,9 +50,11 @@ export default function InvoiceEditor() {
   const { id } = useParams();
   const editing = Boolean(id);
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [profiles, setProfiles] = useState<BusinessProfile[]>([]);
+  const [customerContracts, setCustomerContracts] = useState<Contract[]>([]);
   const [form, setForm] = useState<InvoiceInput>({
     customer_id: "",
     project_id: null,
@@ -121,8 +130,56 @@ export default function InvoiceEditor() {
     })();
   }, [editing, id]);
 
+  // Load the selected customer's contracts so we can offer to pre-fill.
+  useEffect(() => {
+    if (!form.customer_id) {
+      setCustomerContracts([]);
+      return;
+    }
+    let active = true;
+    listContractsForCustomer(form.customer_id)
+      .then((cs) => active && setCustomerContracts(cs))
+      .catch(() => active && setCustomerContracts([]));
+    return () => {
+      active = false;
+    };
+  }, [form.customer_id]);
+
   const set = <K extends keyof InvoiceInput>(k: K, v: InvoiceInput[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  const prefillFromContract = async (contractId: string) => {
+    try {
+      const { contract, lineItems } = await getContract(contractId);
+      if (lineItems.length) {
+        setItems(
+          lineItems.map((li) => ({
+            description: li.description,
+            quantity: Number(li.quantity),
+            unit_price: Number(li.unit_price),
+          })),
+        );
+      }
+      if (contract.notes) set("notes", contract.notes);
+      if (contract.payment_terms_days > 0) {
+        const d = new Date(form.issue_date + "T00:00:00");
+        d.setDate(d.getDate() + contract.payment_terms_days);
+        set("due_date", d.toISOString().slice(0, 10));
+      }
+      toast("Pre-filled from contract", "success");
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  };
+
+  const openContract = async (path: string | null) => {
+    if (!path) return;
+    try {
+      window.open(await getContractUrl(path), "_blank", "noopener");
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  };
 
   const setItem = (i: number, patch: Partial<LineItemInput>) =>
     setItems((arr) => arr.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
@@ -286,6 +343,43 @@ export default function InvoiceEditor() {
           </Field>
         )}
       </div>
+
+      {/* Contracts on file for this customer */}
+      {customerContracts.length > 0 && (
+        <div className="mt-6 panel p-4">
+          <div className="text-sm font-semibold text-content">
+            Contracts on file
+          </div>
+          <ul className="mt-2 space-y-2">
+            {customerContracts.map((c) => (
+              <li
+                key={c.id}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+              >
+                <span className="text-muted">{c.title}</span>
+                <span className="flex gap-3">
+                  {c.path && (
+                    <button
+                      type="button"
+                      onClick={() => openContract(c.path)}
+                      className="text-brand hover:underline"
+                    >
+                      Open
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => prefillFromContract(c.id)}
+                    className="text-brand hover:underline"
+                  >
+                    Use in this invoice
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Line items */}
       <div className="mt-6 overflow-x-auto panel">

@@ -11,8 +11,10 @@ import { Download } from "lucide-react";
 import { money, formatDate } from "../lib/format";
 import { exportBillsCsv } from "../lib/quickbooks";
 import Modal from "../components/Modal";
+import BrandSelect from "../components/BrandSelect";
 import { Badge, Button, Field, TextInput, TextArea } from "../components/ui";
 import { useToast, useConfirm } from "../components/feedback";
+import { useBrand } from "../brand/BrandContext";
 
 const selectCls =
   "w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm text-content focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand";
@@ -27,11 +29,13 @@ const empty: BillInput = {
   status: "unpaid",
   paid_on: null,
   notes: null,
+  business_profile_id: null,
 };
 
 export default function Bills() {
   const toast = useToast();
   const confirm = useConfirm();
+  const { brand } = useBrand();
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +47,7 @@ export default function Bills() {
     setLoading(true);
     setError(null);
     try {
-      setBills(await listBills());
+      setBills(await listBills(brand));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -53,7 +57,8 @@ export default function Bills() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -363,6 +368,11 @@ function BillFormModal({
             onChange={(e) => set("notes", e.target.value)}
           />
         </Field>
+
+        <BrandSelect
+          value={form.business_profile_id}
+          onChange={(v) => set("business_profile_id", v)}
+        />
 
         {error && (
           <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">

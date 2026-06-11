@@ -10,8 +10,10 @@ import {
   type ProjectRow,
 } from "../lib/projects";
 import Modal from "../components/Modal";
+import BrandSelect from "../components/BrandSelect";
 import { Badge, Button, Field, TextInput, TextArea } from "../components/ui";
 import { useToast, useConfirm } from "../components/feedback";
+import { useBrand } from "../brand/BrandContext";
 
 const STATUSES: ProjectStatus[] = ["active", "on_hold", "done", "cancelled"];
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -28,11 +30,13 @@ const empty: ProjectInput = {
   name: "",
   status: "active",
   notes: null,
+  business_profile_id: null,
 };
 
 export default function Projects() {
   const toast = useToast();
   const confirm = useConfirm();
+  const { brand } = useBrand();
   const [rows, setRows] = useState<ProjectRow[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +49,7 @@ export default function Projects() {
     setLoading(true);
     setError(null);
     try {
-      const [p, c] = await Promise.all([listProjects(), listCustomers()]);
+      const [p, c] = await Promise.all([listProjects(brand), listCustomers(brand)]);
       setRows(p);
       setCustomers(c);
     } catch (e) {
@@ -57,7 +61,8 @@ export default function Projects() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -231,6 +236,7 @@ function ProjectFormModal({
         name: editing.name,
         status: editing.status,
         notes: editing.notes,
+        business_profile_id: editing.business_profile_id,
       });
     } else {
       setForm(empty);
@@ -309,6 +315,11 @@ function ProjectFormModal({
             onChange={(e) => set("notes", e.target.value)}
           />
         </Field>
+
+        <BrandSelect
+          value={form.business_profile_id}
+          onChange={(v) => set("business_profile_id", v)}
+        />
 
         {error && (
           <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">

@@ -11,11 +11,13 @@ import {
 import CustomerFormModal from "../components/CustomerFormModal";
 import { Button, TextInput } from "../components/ui";
 import { useToast, useConfirm } from "../components/feedback";
+import { useBrand } from "../brand/BrandContext";
 
 export default function Customers() {
   const toast = useToast();
   const confirm = useConfirm();
   const navigate = useNavigate();
+  const { brand } = useBrand();
   const [customers, setCustomers] = useState<CustomerListRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export default function Customers() {
     setLoading(true);
     setError(null);
     try {
-      setCustomers(await listCustomers());
+      setCustomers(await listCustomers(brand));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -38,7 +40,8 @@ export default function Customers() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

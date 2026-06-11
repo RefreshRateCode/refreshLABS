@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Expense } from "./database.types";
+import { applyBrand, type BrandFilter } from "./brand";
 
 export type ExpenseInput = {
   expense_date: string;
@@ -13,6 +14,7 @@ export type ExpenseInput = {
   tax_category: string | null;
   receipt_path: string | null;
   notes: string | null;
+  business_profile_id: string | null;
 };
 
 export type ExpenseRow = Expense & {
@@ -20,11 +22,15 @@ export type ExpenseRow = Expense & {
   project: { name: string } | null;
 };
 
-export async function listExpenses(): Promise<ExpenseRow[]> {
-  const { data, error } = await supabase
-    .from("expenses")
-    .select("*, customer:customers(display_name), project:projects(name)")
-    .order("expense_date", { ascending: false });
+export async function listExpenses(
+  brand: BrandFilter = "all",
+): Promise<ExpenseRow[]> {
+  const { data, error } = await applyBrand(
+    supabase
+      .from("expenses")
+      .select("*, customer:customers(display_name), project:projects(name)"),
+    brand,
+  ).order("expense_date", { ascending: false });
   if (error) throw error;
   return data as unknown as ExpenseRow[];
 }

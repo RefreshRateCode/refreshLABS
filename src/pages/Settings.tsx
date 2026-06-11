@@ -266,10 +266,12 @@ function BusinessProfilesSection() {
 
   return (
     <section className="panel mt-6 max-w-2xl p-6">
-      <h2 className="font-semibold text-content">Business profiles (DBAs)</h2>
+      <h2 className="font-semibold text-content">Brands &amp; DBAs</h2>
       <p className="mt-1 text-sm text-muted">
-        Additional names under the noalanPRO umbrella. Pick one as “Issued by”
-        on an estimate or invoice and it appears on that document’s PDF.
+        Additional names under the noalanPRO umbrella — legal DBAs or brands for
+        merch, apps, and other ventures. Tag any record with one, and the global
+        brand switcher filters the whole app to it. On invoices, estimates, and
+        contracts the chosen brand also prints on the PDF.
       </p>
 
       <div className="mt-4 overflow-hidden rounded-lg border border-line">

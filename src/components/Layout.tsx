@@ -8,6 +8,7 @@ import {
   CreditCard,
   Calculator,
   FolderKanban,
+  FileSignature,
   BarChart3,
   Settings as SettingsIcon,
   Sun,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../theme/ThemeContext";
+import BrandSwitcher from "./BrandSwitcher";
 
 const nav: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -27,6 +29,7 @@ const nav: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
   { to: "/bills", label: "Bills", icon: Receipt },
   { to: "/expenses", label: "Expenses", icon: CreditCard },
   { to: "/estimator", label: "Estimator", icon: Calculator },
+  { to: "/contracts", label: "Contracts", icon: FileSignature },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
@@ -162,6 +165,7 @@ export default function Layout() {
 
       <main className="flex-1 overflow-auto pt-14 lg:pt-0 print:overflow-visible print:pt-0">
         <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 print:max-w-none print:p-0">
+          <BrandSwitcher />
           <Suspense fallback={<p className="text-faint">Loading…</p>}>
             <Outlet />
           </Suspense>
