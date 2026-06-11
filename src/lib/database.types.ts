@@ -15,10 +15,10 @@ export type BillStatus = "unpaid" | "paid";
 export interface Customer {
   id: string;
   owner_id: string;
-  display_name: string;
-  company: string | null;
-  email: string | null;
-  phone: string | null;
+  display_name: string; // kept in sync with `company` by the app
+  company: string;
+  email: string | null; // cache of the primary contact's email (DB trigger)
+  phone: string | null; // cache of the primary contact's phone (DB trigger)
   bill_line1: string | null;
   bill_line2: string | null;
   bill_city: string | null;
@@ -29,6 +29,31 @@ export interface Customer {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface CustomerContact {
+  id: string;
+  owner_id: string;
+  customer_id: string;
+  name: string;
+  role: string | null;
+  email: string | null;
+  phone: string | null;
+  is_primary: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomerFile {
+  id: string;
+  owner_id: string;
+  customer_id: string;
+  path: string;
+  name: string;
+  mime: string | null;
+  size_bytes: number | null;
+  created_at: string;
 }
 
 export interface Project {

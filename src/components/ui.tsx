@@ -57,6 +57,8 @@ const badgeColors: Record<string, string> = {
   declined: "bg-red-500/15 text-red-300",
   one_time: "bg-neutral-500/15 text-content",
   monthly: "bg-brand/15 text-brand",
+  // contact roles
+  primary: "bg-brand/15 text-brand",
 };
 
 export function Badge({ status }: { status: string }) {

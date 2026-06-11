@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
 import type { Customer } from "../lib/database.types";
 import { exportCustomersCsv } from "../lib/quickbooks";
-import { listCustomers, deleteCustomer } from "../lib/customers";
+import {
+  listCustomers,
+  deleteCustomer,
+  type CustomerListRow,
+} from "../lib/customers";
 import CustomerFormModal from "../components/CustomerFormModal";
 import { Button, TextInput } from "../components/ui";
 import { useToast, useConfirm } from "../components/feedback";
@@ -12,7 +16,7 @@ export default function Customers() {
   const toast = useToast();
   const confirm = useConfirm();
   const navigate = useNavigate();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<CustomerListRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -40,7 +44,7 @@ export default function Customers() {
     const q = query.trim().toLowerCase();
     if (!q) return customers;
     return customers.filter((c) =>
-      [c.display_name, c.company, c.email, c.phone]
+      [c.company, c.primary_contact, c.email, c.phone]
         .filter(Boolean)
         .some((v) => v!.toLowerCase().includes(q)),
     );
@@ -102,7 +106,7 @@ export default function Customers() {
 
       <div className="mt-5">
         <TextInput
-          placeholder="Search name, company, email, phone…"
+          placeholder="Search company, contact, email, phone…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-sm"
@@ -119,8 +123,8 @@ export default function Customers() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-faint">
-              <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">Company</th>
+              <th className="px-4 py-3 font-medium">Contact</th>
               <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Phone</th>
               <th className="px-4 py-3" />
@@ -151,9 +155,11 @@ export default function Customers() {
                     className="cursor-pointer px-4 py-3 font-medium text-content hover:text-brand"
                     onClick={() => navigate(`/customers/${c.id}`)}
                   >
-                    {c.display_name}
+                    {c.company}
                   </td>
-                  <td className="px-4 py-3 text-muted">{c.company ?? "—"}</td>
+                  <td className="px-4 py-3 text-muted">
+                    {c.primary_contact ?? "—"}
+                  </td>
                   <td className="px-4 py-3 text-muted">{c.email ?? "—"}</td>
                   <td className="px-4 py-3 text-muted">{c.phone ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
@@ -181,18 +187,10 @@ export default function Customers() {
         open={formOpen}
         editing={editing}
         onClose={() => setFormOpen(false)}
-        onSaved={(saved) => {
-          setCustomers((prev) => {
-            const exists = prev.some((c) => c.id === saved.id);
-            const next = exists
-              ? prev.map((c) => (c.id === saved.id ? saved : c))
-              : [...prev, saved];
-            return next.sort((a, b) =>
-              a.display_name.localeCompare(b.display_name),
-            );
-          });
+        onSaved={() => {
           setFormOpen(false);
           toast("Customer saved", "success");
+          void load();
         }}
       />
     </div>
