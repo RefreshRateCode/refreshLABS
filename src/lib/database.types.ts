@@ -78,6 +78,22 @@ export interface Invoice {
   due_date: string | null;
   tax_rate: number;
   notes: string | null;
+  business_profile_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// A "doing business as" identity. Optional per estimate/invoice; falls back to
+// the primary identity in app_settings.
+export interface BusinessProfile {
+  id: string;
+  owner_id: string;
+  name: string;
+  line1: string | null;
+  line2: string | null;
+  city_state_zip: string | null;
+  email: string | null;
+  phone: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -123,7 +139,43 @@ export interface Bill {
 }
 
 export type EstimateKind = "one_time" | "monthly";
-export type EstimateStatus = "draft" | "sent" | "accepted" | "declined";
+export type EstimateStatus =
+  | "needs_quote"
+  | "in_progress"
+  | "sent"
+  | "awaiting_approval"
+  | "accepted"
+  | "declined"
+  | "expired";
+
+// Pipeline order + human labels, shared by the editor, list, and badges.
+export const ESTIMATE_STATUSES: EstimateStatus[] = [
+  "needs_quote",
+  "in_progress",
+  "sent",
+  "awaiting_approval",
+  "accepted",
+  "declined",
+  "expired",
+];
+
+export const ESTIMATE_STATUS_LABEL: Record<EstimateStatus, string> = {
+  needs_quote: "Needs quote",
+  in_progress: "Quote in progress",
+  sent: "Sent",
+  awaiting_approval: "Awaiting approval",
+  accepted: "Accepted",
+  declined: "Declined",
+  expired: "Expired",
+};
+
+// Stages that count as "open" (still in play, not won/lost/expired).
+export const ESTIMATE_OPEN_STATUSES: EstimateStatus[] = [
+  "needs_quote",
+  "in_progress",
+  "sent",
+  "awaiting_approval",
+];
 
 export interface ServicePreset {
   id: string;
@@ -148,6 +200,7 @@ export interface Estimate {
   discount_pct: number;
   notes: string | null;
   converted_invoice_id: string | null;
+  business_profile_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -159,7 +212,8 @@ export interface EstimateLineItem {
   description: string;
   quantity: number;
   unit_price: number;
-  amount: number;
+  discount_pct: number; // per-line discount %
+  amount: number; // generated: quantity * unit_price * (1 - discount_pct/100)
   position: number;
   created_at: string;
 }

@@ -5,7 +5,7 @@ import type {
   InvoiceSummary,
 } from "./database.types";
 import { money, formatDate } from "./format";
-import { getSettings } from "./settings";
+import { resolveBusinessIdentity } from "./businessProfiles";
 
 const M = 50; // page margin (pt)
 
@@ -42,7 +42,7 @@ export async function generateInvoicePdf(args: {
   summary: InvoiceSummary | null;
 }): Promise<void> {
   const { invoice, items, customer, summary } = args;
-  const settings = await getSettings();
+  const identity = await resolveBusinessIdentity(invoice.business_profile_id);
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -64,10 +64,10 @@ export async function generateInvoicePdf(args: {
     doc.addImage(logo.dataUrl, "PNG", M, 26, w, h);
   }
 
-  if (settings.business_name) {
+  if (identity.name) {
     doc.setFont("helvetica", "bold").setFontSize(10);
     doc.setTextColor(235, 235, 235);
-    doc.text(settings.business_name, M, 60);
+    doc.text(identity.name, M, 60);
   }
 
   // Business contact under the logo (muted on dark)
@@ -75,11 +75,11 @@ export async function generateInvoicePdf(args: {
   doc.setTextColor(150, 150, 150);
   let by = 72;
   for (const line of [
-    settings.business_line1,
-    settings.business_line2,
-    settings.business_city_state_zip,
-    settings.business_email,
-    settings.business_phone,
+    identity.line1,
+    identity.line2,
+    identity.city_state_zip,
+    identity.email,
+    identity.phone,
   ].filter(Boolean)) {
     doc.text(String(line), M, by);
     by += 11;

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import type {
-  Customer,
-  Estimate,
-  EstimateLineItem,
-  EstimateSummary,
+import {
+  ESTIMATE_STATUS_LABEL,
+  type Customer,
+  type Estimate,
+  type EstimateLineItem,
+  type EstimateSummary,
 } from "../lib/database.types";
 import {
   getEstimate,
@@ -163,8 +164,14 @@ export default function EstimateView() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Badge status={estimate.kind} />
-            <Badge status={estimate.status} />
+            <Badge
+              status={estimate.kind}
+              label={estimate.kind === "one_time" ? "One-time" : "Monthly"}
+            />
+            <Badge
+              status={estimate.status}
+              label={ESTIMATE_STATUS_LABEL[estimate.status]}
+            />
           </div>
         </div>
 
@@ -174,6 +181,7 @@ export default function EstimateView() {
               <th className="py-2 font-medium">Description</th>
               <th className="py-2 text-right font-medium">Qty</th>
               <th className="py-2 text-right font-medium">Unit</th>
+              <th className="py-2 text-right font-medium">Disc</th>
               <th className="py-2 text-right font-medium">Amount</th>
             </tr>
           </thead>
@@ -186,6 +194,9 @@ export default function EstimateView() {
                 </td>
                 <td className="py-2 text-right text-muted">
                   {money(it.unit_price)}
+                </td>
+                <td className="py-2 text-right text-muted">
+                  {Number(it.discount_pct) > 0 ? `${Number(it.discount_pct)}%` : "—"}
                 </td>
                 <td className="py-2 text-right text-content">
                   {money(it.amount)}

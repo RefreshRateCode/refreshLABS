@@ -13,6 +13,7 @@ export type EstLineItemInput = {
   description: string;
   quantity: number;
   unit_price: number;
+  discount_pct: number;
 };
 
 export type EstimateInput = {
@@ -23,6 +24,7 @@ export type EstimateInput = {
   tax_rate: number;
   discount_pct: number;
   notes: string | null;
+  business_profile_id: string | null;
 };
 
 export type EstimateListRow = EstimateSummary & {
@@ -74,6 +76,7 @@ async function replaceLineItems(estimateId: string, items: EstLineItemInput[]) {
       description: it.description,
       quantity: it.quantity,
       unit_price: it.unit_price,
+      discount_pct: it.discount_pct ?? 0,
       position: i,
     }));
   if (rows.length) {
@@ -112,19 +115,38 @@ export async function deleteEstimate(id: string): Promise<void> {
   if (error) throw error;
 }
 
-// Build line items (with discount line) from a plan's stored line items.
-function planItems(
+type InvoiceItemInput = {
+  description: string;
+  quantity: number;
+  unit_price: number;
+};
+
+// Translate an estimate's line items into invoice line items. Invoices have no
+// per-line discount field, so any per-line discounts are folded into a single
+// consolidated "Discount" line; the estimate-level discount adds its own line.
+// (The two are mutually exclusive in the editor, so at most one appears.)
+function buildInvoiceItems(
   lineItems: EstimateLineItem[],
   discountPct: number,
-): EstLineItemInput[] {
-  const items = lineItems.map((li) => ({
+): InvoiceItemInput[] {
+  const items: InvoiceItemInput[] = lineItems.map((li) => ({
     description: li.description,
     quantity: Number(li.quantity),
     unit_price: Number(li.unit_price),
   }));
+
+  const gross = lineItems.reduce(
+    (s, li) => s + Number(li.quantity) * Number(li.unit_price),
+    0,
+  );
+  const net = lineItems.reduce((s, li) => s + Number(li.amount), 0);
+  const lineDiscount = Math.round((gross - net) * 100) / 100;
+  if (lineDiscount > 0) {
+    items.push({ description: "Discount", quantity: 1, unit_price: -lineDiscount });
+  }
+
   if (Number(discountPct) > 0) {
-    const subtotal = lineItems.reduce((s, li) => s + Number(li.amount), 0);
-    const discount = Math.round(subtotal * Number(discountPct)) / 100;
+    const discount = Math.round(net * Number(discountPct)) / 100;
     items.push({
       description: `Discount (${discountPct}%)`,
       quantity: 1,
@@ -155,7 +177,7 @@ export async function generateMonthlyInvoices(): Promise<{
 
   const { data: plans, error } = await supabase
     .from("estimates")
-    .select("id, customer_id, tax_rate, discount_pct, notes")
+    .select("id, customer_id, tax_rate, discount_pct, notes, business_profile_id")
     .eq("kind", "monthly")
     .eq("status", "accepted");
   if (error) throw error;
@@ -168,6 +190,7 @@ export async function generateMonthlyInvoices(): Promise<{
     tax_rate: number;
     discount_pct: number;
     notes: string | null;
+    business_profile_id: string | null;
   }[]) {
     if (!plan.customer_id) {
       skipped++;
@@ -197,9 +220,10 @@ export async function generateMonthlyInvoices(): Promise<{
         due_date: dueFromTerms(issue, settings.default_payment_terms_days),
         tax_rate: Number(plan.tax_rate),
         notes: plan.notes ?? settings.default_invoice_notes,
+        business_profile_id: plan.business_profile_id,
         source_estimate_id: plan.id,
       },
-      planItems(lineItems, Number(plan.discount_pct)),
+      buildInvoiceItems(lineItems, Number(plan.discount_pct)),
     );
     created++;
   }
@@ -215,22 +239,7 @@ export async function convertToInvoice(estimateId: string): Promise<string> {
   const settings = await getSettings();
   const number = await suggestNextNumber(settings.invoice_prefix);
 
-  const items = lineItems.map((li) => ({
-    description: li.description,
-    quantity: Number(li.quantity),
-    unit_price: Number(li.unit_price),
-  }));
-
-  if (Number(estimate.discount_pct) > 0) {
-    const subtotal = lineItems.reduce((s, li) => s + Number(li.amount), 0);
-    const discount =
-      Math.round(subtotal * Number(estimate.discount_pct)) / 100;
-    items.push({
-      description: `Discount (${estimate.discount_pct}%)`,
-      quantity: 1,
-      unit_price: -discount,
-    });
-  }
+  const items = buildInvoiceItems(lineItems, Number(estimate.discount_pct));
 
   const issue = new Date().toISOString().slice(0, 10);
   const terms = settings.default_payment_terms_days;
@@ -251,6 +260,7 @@ export async function convertToInvoice(estimateId: string): Promise<string> {
       due_date: due,
       tax_rate: Number(estimate.tax_rate),
       notes: estimate.notes ?? settings.default_invoice_notes,
+      business_profile_id: estimate.business_profile_id,
       source_estimate_id: estimateId,
     },
     items,

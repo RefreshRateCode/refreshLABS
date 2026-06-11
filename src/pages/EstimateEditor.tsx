@@ -1,13 +1,17 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type {
-  Customer,
-  EstimateKind,
-  EstimateStatus,
-  ServicePreset,
+import {
+  ESTIMATE_STATUSES,
+  ESTIMATE_STATUS_LABEL,
+  type BusinessProfile,
+  type Customer,
+  type EstimateKind,
+  type EstimateStatus,
+  type ServicePreset,
 } from "../lib/database.types";
 import { listCustomers } from "../lib/customers";
 import { listPresets } from "../lib/presets";
+import { listBusinessProfiles } from "../lib/businessProfiles";
 import {
   createEstimate,
   updateEstimate,
@@ -18,13 +22,13 @@ import {
 import { money } from "../lib/format";
 import { Button, Field, TextInput, TextArea } from "../components/ui";
 
-const STATUSES: EstimateStatus[] = ["draft", "sent", "accepted", "declined"];
 const selectCls =
   "w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm text-content focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand";
 const blankRow = (): EstLineItemInput => ({
   description: "",
   quantity: 1,
   unit_price: 0,
+  discount_pct: 0,
 });
 
 export default function EstimateEditor() {
@@ -34,14 +38,16 @@ export default function EstimateEditor() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [presets, setPresets] = useState<ServicePreset[]>([]);
+  const [profiles, setProfiles] = useState<BusinessProfile[]>([]);
   const [form, setForm] = useState<EstimateInput>({
     customer_id: null,
     title: "",
     kind: "one_time",
-    status: "draft",
+    status: "needs_quote",
     tax_rate: 0,
     discount_pct: 0,
     notes: null,
+    business_profile_id: null,
   });
   const [items, setItems] = useState<EstLineItemInput[]>([blankRow()]);
   const [loading, setLoading] = useState(true);
@@ -52,12 +58,14 @@ export default function EstimateEditor() {
     (async () => {
       setLoading(true);
       try {
-        const [custs, pres] = await Promise.all([
+        const [custs, pres, profs] = await Promise.all([
           listCustomers(),
           listPresets(),
+          listBusinessProfiles(),
         ]);
         setCustomers(custs);
         setPresets(pres);
+        setProfiles(profs);
         if (editing && id) {
           const { estimate, lineItems } = await getEstimate(id);
           setForm({
@@ -68,6 +76,7 @@ export default function EstimateEditor() {
             tax_rate: estimate.tax_rate,
             discount_pct: estimate.discount_pct,
             notes: estimate.notes,
+            business_profile_id: estimate.business_profile_id,
           });
           setItems(
             lineItems.length
@@ -75,6 +84,7 @@ export default function EstimateEditor() {
                   description: li.description,
                   quantity: Number(li.quantity),
                   unit_price: Number(li.unit_price),
+                  discount_pct: Number(li.discount_pct),
                 }))
               : [blankRow()],
           );
@@ -104,6 +114,7 @@ export default function EstimateEditor() {
       description: p.description?.trim() ? `${p.name} — ${p.description}` : p.name,
       quantity: Number(p.default_qty),
       unit_price: Number(p.default_rate),
+      discount_pct: 0,
     };
     setItems((arr) => {
       const onlyBlank =
@@ -112,14 +123,25 @@ export default function EstimateEditor() {
     });
   };
 
-  const subtotal = items.reduce(
-    (s, it) => s + Number(it.quantity || 0) * Number(it.unit_price || 0),
-    0,
-  );
+  // A line's total, net of its own discount (matches the DB `amount` column).
+  const lineNet = (it: EstLineItemInput) =>
+    Math.round(
+      Number(it.quantity || 0) *
+        Number(it.unit_price || 0) *
+        (1 - Number(it.discount_pct || 0) / 100) *
+        100,
+    ) / 100;
+
+  // Subtotal is already net of per-line discounts, matching estimate_summary.
+  const subtotal = items.reduce((s, it) => s + lineNet(it), 0);
   const discount = Math.round(subtotal * Number(form.discount_pct || 0)) / 100;
   const net = subtotal - discount;
   const tax = Math.round(net * Number(form.tax_rate || 0)) / 100;
   const total = net + tax;
+
+  // A line discount and the estimate-level discount are mutually exclusive.
+  const anyLineDiscount = items.some((it) => Number(it.discount_pct || 0) > 0);
+  const overallApplied = Number(form.discount_pct || 0) > 0;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -207,18 +229,44 @@ export default function EstimateEditor() {
             value={form.status}
             onChange={(e) => set("status", e.target.value as EstimateStatus)}
           >
-            {STATUSES.map((s) => (
-              <option key={s} value={s} className="capitalize">
-                {s}
+            {ESTIMATE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {ESTIMATE_STATUS_LABEL[s]}
               </option>
             ))}
           </select>
         </Field>
-        <Field label="Discount (%)">
+        {profiles.length > 0 && (
+          <Field label="Issued by">
+            <select
+              className={selectCls}
+              value={form.business_profile_id ?? ""}
+              onChange={(e) =>
+                set("business_profile_id", e.target.value || null)
+              }
+            >
+              <option value="">Primary (default)</option>
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+        <Field
+          label="Discount (%)"
+          hint={
+            anyLineDiscount
+              ? "Disabled — clear per-line discounts to use an overall discount."
+              : undefined
+          }
+        >
           <TextInput
             type="number"
             step="0.001"
             min="0"
+            disabled={anyLineDiscount}
             value={form.discount_pct}
             onChange={(e) => set("discount_pct", Number(e.target.value))}
           />
@@ -242,6 +290,7 @@ export default function EstimateEditor() {
               <th className="px-4 py-3 font-medium">Description</th>
               <th className="w-24 px-4 py-3 text-right font-medium">Qty</th>
               <th className="w-32 px-4 py-3 text-right font-medium">Unit price</th>
+              <th className="w-24 px-4 py-3 text-right font-medium">Disc %</th>
               <th className="w-32 px-4 py-3 text-right font-medium">Amount</th>
               <th className="w-10 px-2 py-3" />
             </tr>
@@ -278,8 +327,27 @@ export default function EstimateEditor() {
                     }
                   />
                 </td>
+                <td className="px-4 py-2">
+                  <TextInput
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    max="100"
+                    className="text-right"
+                    disabled={overallApplied}
+                    title={
+                      overallApplied
+                        ? "Disabled — an overall discount is applied"
+                        : undefined
+                    }
+                    value={it.discount_pct}
+                    onChange={(e) =>
+                      setItem(i, { discount_pct: Number(e.target.value) })
+                    }
+                  />
+                </td>
                 <td className="px-4 py-2 text-right text-content">
-                  {money(Number(it.quantity || 0) * Number(it.unit_price || 0))}
+                  {money(lineNet(it))}
                 </td>
                 <td className="px-2 py-2 text-center">
                   <button

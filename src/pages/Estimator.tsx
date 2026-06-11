@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import type { ServicePreset } from "../lib/database.types";
+import {
+  ESTIMATE_OPEN_STATUSES,
+  ESTIMATE_STATUS_LABEL,
+  type EstimateStatus,
+  type ServicePreset,
+} from "../lib/database.types";
 import {
   listEstimates,
   generateMonthlyInvoices,
@@ -48,23 +53,28 @@ export default function Estimator() {
     load();
   }, []);
 
-  const mrr = rows
-    .filter((r) => r.kind === "monthly" && r.status === "accepted")
-    .reduce((s, r) => s + Number(r.total), 0);
-  const pipeline = rows
-    .filter(
-      (r) =>
-        r.kind === "one_time" &&
-        (r.status === "draft" || r.status === "sent") &&
-        !r.converted_invoice_id,
-    )
-    .reduce((s, r) => s + Number(r.total), 0);
+  // Open pipeline = everything still in play (not won/lost/expired).
+  const openRows = rows.filter(
+    (r) =>
+      ESTIMATE_OPEN_STATUSES.includes(r.status as EstimateStatus) &&
+      !r.converted_invoice_id,
+  );
+  const openValue = openRows.reduce((s, r) => s + Number(r.total), 0);
+  const stageValue = (status: EstimateStatus) =>
+    openRows
+      .filter((r) => r.status === status)
+      .reduce((s, r) => s + Number(r.total), 0);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((r) =>
-      [r.title, r.customer?.display_name, r.status, r.kind]
+      [
+        r.title,
+        r.customer?.display_name,
+        ESTIMATE_STATUS_LABEL[r.status as EstimateStatus] ?? r.status,
+        r.kind,
+      ]
         .filter(Boolean)
         .some((v) => v!.toLowerCase().includes(q)),
     );
@@ -111,22 +121,35 @@ export default function Estimator() {
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="panel p-5">
-          <div className="text-sm text-muted">Monthly recurring (MRR)</div>
-          <div className="accent-gradient mt-2 text-3xl font-semibold">
-            {loading ? "…" : `${money(mrr)}/mo`}
+      {/* Summary — total estimated value still in play, broken out by stage */}
+      <div className="mt-6 panel p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="text-sm text-muted">Open pipeline value</div>
+          <div className="text-xs text-faint">
+            {loading
+              ? ""
+              : `${openRows.length} open estimate${
+                  openRows.length === 1 ? "" : "s"
+                }`}
           </div>
-          <div className="mt-1 text-xs text-faint">accepted monthly plans</div>
         </div>
-        <div className="panel p-5">
-          <div className="text-sm text-muted">One-time pipeline</div>
-          <div className="accent-gradient mt-2 text-3xl font-semibold">
-            {loading ? "…" : money(pipeline)}
+        <div className="accent-gradient mt-2 text-3xl font-semibold">
+          {loading ? "…" : money(openValue)}
+        </div>
+        {!loading && openRows.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-4 sm:grid-cols-4">
+            {ESTIMATE_OPEN_STATUSES.map((s) => (
+              <div key={s}>
+                <div className="text-xs text-faint">
+                  {ESTIMATE_STATUS_LABEL[s]}
+                </div>
+                <div className="mt-0.5 text-lg font-semibold text-content">
+                  {money(stageValue(s))}
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="mt-1 text-xs text-faint">open quotes not yet won</div>
-        </div>
+        )}
       </div>
 
       <div className="mt-6">
@@ -184,10 +207,19 @@ export default function Estimator() {
                     {r.customer?.display_name ?? "—"}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge status={r.kind} />
+                    <Badge
+                      status={r.kind}
+                      label={r.kind === "one_time" ? "One-time" : "Monthly"}
+                    />
                   </td>
                   <td className="px-4 py-3">
-                    <Badge status={r.status} />
+                    <Badge
+                      status={r.status}
+                      label={
+                        ESTIMATE_STATUS_LABEL[r.status as EstimateStatus] ??
+                        r.status
+                      }
+                    />
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-content">
                     {money(r.total)}

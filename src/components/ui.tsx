@@ -53,21 +53,25 @@ const badgeColors: Record<string, string> = {
   done: "bg-emerald-500/15 text-emerald-300",
   cancelled: "bg-neutral-600/20 text-faint line-through",
   // estimate statuses + kinds
+  needs_quote: "bg-neutral-500/15 text-content",
+  in_progress: "bg-amber-500/15 text-amber-300",
+  awaiting_approval: "bg-violet-500/15 text-violet-300",
   accepted: "bg-emerald-500/15 text-emerald-300",
   declined: "bg-red-500/15 text-red-300",
+  expired: "bg-neutral-600/20 text-faint line-through",
   one_time: "bg-neutral-500/15 text-content",
   monthly: "bg-brand/15 text-brand",
   // contact roles
   primary: "bg-brand/15 text-brand",
 };
 
-export function Badge({ status }: { status: string }) {
+export function Badge({ status, label }: { status: string; label?: string }) {
   const cls = badgeColors[status] ?? "bg-neutral-500/15 text-content";
   return (
     <span
       className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${cls}`}
     >
-      {status.replace(/_/g, " ")}
+      {label ?? status.replace(/_/g, " ")}
     </span>
   );
 }

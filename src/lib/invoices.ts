@@ -21,6 +21,7 @@ export type InvoiceInput = {
   due_date: string | null;
   tax_rate: number;
   notes: string | null;
+  business_profile_id?: string | null;
   source_estimate_id?: string | null;
 };
 

@@ -1,11 +1,12 @@
-import type {
-  Customer,
-  Estimate,
-  EstimateLineItem,
-  EstimateSummary,
+import {
+  ESTIMATE_STATUS_LABEL,
+  type Customer,
+  type Estimate,
+  type EstimateLineItem,
+  type EstimateSummary,
 } from "./database.types";
 import { money } from "./format";
-import { getSettings } from "./settings";
+import { resolveBusinessIdentity } from "./businessProfiles";
 
 const M = 50;
 
@@ -40,7 +41,7 @@ export async function generateEstimatePdf(args: {
   summary: EstimateSummary | null;
 }): Promise<void> {
   const { estimate, items, customer, summary } = args;
-  const settings = await getSettings();
+  const identity = await resolveBusinessIdentity(estimate.business_profile_id);
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -58,19 +59,19 @@ export async function generateEstimatePdf(args: {
     const w = (logo.w / logo.h) * h;
     doc.addImage(logo.dataUrl, "PNG", M, 26, w, h);
   }
-  if (settings.business_name) {
+  if (identity.name) {
     doc.setFont("helvetica", "bold").setFontSize(10);
     doc.setTextColor(235, 235, 235);
-    doc.text(settings.business_name, M, 60);
+    doc.text(identity.name, M, 60);
   }
   doc.setFont("helvetica", "normal").setFontSize(8);
   doc.setTextColor(150, 150, 150);
   let by = 72;
   for (const line of [
-    settings.business_line1,
-    settings.business_city_state_zip,
-    settings.business_email,
-    settings.business_phone,
+    identity.line1,
+    identity.city_state_zip,
+    identity.email,
+    identity.phone,
   ].filter(Boolean)) {
     doc.text(String(line), M, by);
     by += 11;
@@ -87,7 +88,12 @@ export async function generateEstimatePdf(args: {
     60,
     { align: "right" },
   );
-  doc.text(estimate.status.toUpperCase(), right, 74, { align: "right" });
+  doc.text(
+    ESTIMATE_STATUS_LABEL[estimate.status].toUpperCase(),
+    right,
+    74,
+    { align: "right" },
+  );
 
   let y = BAND_H + 28;
 
@@ -124,7 +130,11 @@ export async function generateEstimatePdf(args: {
 
   doc.setFont("helvetica", "normal").setFontSize(9.5);
   for (const it of items) {
-    const descLines = doc.splitTextToSize(it.description || "—", qtyX - M - 12);
+    const label =
+      Number(it.discount_pct) > 0
+        ? `${it.description || "—"}  (-${Number(it.discount_pct)}%)`
+        : it.description || "—";
+    const descLines = doc.splitTextToSize(label, qtyX - M - 12);
     if (y > pageH - 140) {
       doc.addPage();
       y = M;

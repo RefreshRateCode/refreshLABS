@@ -1,7 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import type { Customer, InvoiceStatus } from "../lib/database.types";
+import type {
+  BusinessProfile,
+  Customer,
+  InvoiceStatus,
+} from "../lib/database.types";
 import { listCustomers } from "../lib/customers";
+import { listBusinessProfiles } from "../lib/businessProfiles";
 import {
   createInvoice,
   updateInvoice,
@@ -40,6 +45,7 @@ export default function InvoiceEditor() {
   const navigate = useNavigate();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [profiles, setProfiles] = useState<BusinessProfile[]>([]);
   const [form, setForm] = useState<InvoiceInput>({
     customer_id: "",
     project_id: null,
@@ -49,6 +55,7 @@ export default function InvoiceEditor() {
     due_date: null,
     tax_rate: 0,
     notes: null,
+    business_profile_id: null,
   });
   const [items, setItems] = useState<LineItemInput[]>([blankRow()]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +66,12 @@ export default function InvoiceEditor() {
     (async () => {
       setLoading(true);
       try {
-        const custs = await listCustomers();
+        const [custs, profs] = await Promise.all([
+          listCustomers(),
+          listBusinessProfiles(),
+        ]);
         setCustomers(custs);
+        setProfiles(profs);
 
         if (editing && id) {
           const { invoice, lineItems } = await getInvoice(id);
@@ -73,6 +84,7 @@ export default function InvoiceEditor() {
             due_date: invoice.due_date,
             tax_rate: invoice.tax_rate,
             notes: invoice.notes,
+            business_profile_id: invoice.business_profile_id,
           });
           setItems(
             lineItems.length
@@ -255,6 +267,24 @@ export default function InvoiceEditor() {
             onChange={(e) => set("tax_rate", Number(e.target.value))}
           />
         </Field>
+        {profiles.length > 0 && (
+          <Field label="Issued by">
+            <select
+              className={selectCls}
+              value={form.business_profile_id ?? ""}
+              onChange={(e) =>
+                set("business_profile_id", e.target.value || null)
+              }
+            >
+              <option value="">Primary (default)</option>
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
       </div>
 
       {/* Line items */}
